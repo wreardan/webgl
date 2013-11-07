@@ -7,6 +7,26 @@ function Mesh() {
     this.vboIndex = null;
     this.vboWireframe = null;
     this.wireframe_mode = 0;
+    this.textureHandle = null;
+    this.width = -1;
+    this.height = -1;
+}
+
+function HandleTextureLoaded(image, texture) {
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+}
+
+Mesh.prototype.LoadTexture = function (filename)
+{
+	var texture = this.textureHandle = gl.createTexture();
+	image = new Image();
+	image.onload = function() { HandleTextureLoaded(image, texture); }
+	image.src = filename;
 }
 
 Mesh.prototype.rawVertices = function () {
@@ -35,18 +55,26 @@ Mesh.prototype.rawVertices = function () {
 }
 
 Mesh.prototype.Init = function(width, height) {
+	if(width * height > 65535)
+		throw("Mesh.Init: WebGL 1.0 limited to 65535 (ushort) vertices/Model");
+		
+		this.width = width;
+		this.height = height;
+		
     var y_one = 1.0 / (height-1);
     var x_one = 1.0 / (width - 1);
 
-    //Create mesh vertices
-    for (var y = 0; y < height; y++) {
-        for (var x = 0; x < width; x++) {
-            var vertex = this.vertices[y * width + x] = {};
-            vertex.position = [2.0 * x_one * x - 1.0, 2*y_one * y - 1, 0.0, 1.0];
-            vertex.color = [1.0, 1.0, 1.0, 1.0];
-            vertex.normal = [0.0, 0.0, 1.0, 0.0];
-            vertex.tex = [x_one * x, y_one * y, 1337.0, 1337.0];
-        }
+		if(this.vertices.length == 0) {
+			//Create planar-mesh vertices
+			for (var y = 0; y < height; y++) {
+					for (var x = 0; x < width; x++) {
+							var vertex = this.vertices[y * width + x] = {};
+							vertex.position = [2.0 * x_one * x - 1.0, 2*y_one * y - 1, 0.0, 1.0];
+							vertex.color = [1.0, 1.0, 1.0, 1.0];
+							vertex.normal = [0.0, 0.0, 1.0, 0.0];
+							vertex.tex = [x_one * x, y_one * y, 1337.0, 1337.0];
+					}
+			}
     }
 
     //Create VBO
@@ -100,6 +128,51 @@ Mesh.prototype.Init = function(width, height) {
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.wireframe_indices), gl.STATIC_DRAW);
 }
 
+Mesh.prototype.Sphere = function(width, height) {
+	var R = 1.0 / (height - 1);
+	var S = 1.0 / (width - 1);
+	var index;
+	var circlePos = [0, 0, 0, 1];
+
+	index = 0;
+	for (var r = 0; r < height; ++r) {
+		for (var c = 0; c < width; ++c) {
+			var vertex = this.vertices[r * width + c] = {};
+			var x = (Math.cos(2 * Math.PI * c * S) * Math.sin( Math.PI * r * R ));
+			var y = (Math.sin( -Math.PI/2 + Math.PI * r * R ));
+			var z = (Math.sin(2*Math.PI * c * S) * Math.sin( Math.PI * r * R ));
+			vertex.position = [x * 1.0, y * 1.0, z * 1.0, 1.0];
+			vertex.color = [1.0, 1.0, 1.0, 1.0];
+			vertex.normal = vertex.position;
+			vertex.tex = [S * r, R * c, 1337.0, 1337.0];
+			index++;
+		}
+	}
+	this.Init(width, height);
+}
+
+Mesh.prototype.Cylinder = function(width, height) {
+	var R = 1.0 / (height - 1);
+	var S = 1.0 / (width - 1);
+	var index;
+	var circlePos = [0, 0, 0, 1];
+
+	index = 0;
+	for (var r = 0; r < height; ++r) {
+		for (var c = 0; c < width; ++c) {
+			var vertex = this.vertices[r * width + c] = {};
+			var x = Math.cos(2 * Math.PI * c * S);
+			var y = r * R * 1.0; //last term is height
+			var z = Math.sin( Math.PI * r * R );
+			vertex.position = [x * 1.0, y * 1.0, z * 1.0, 1.0];
+			vertex.color = [1.0, 1.0, 1.0, 1.0];
+			vertex.normal = vertex.position;
+			vertex.tex = [S * x, R * y, 1337.0, 1337.0];
+			index++;
+		}
+	}
+	this.Init(width, height);
+}
 
 Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
     shader.Use();
@@ -111,6 +184,10 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
     shader.SetUniform("ProjectionMatrix", projection);
     shader.SetUniform("ModelViewMatrix", modelview);
     shader.SetUniform("NormalMatrix", modelview.transpose().inverse());
+    if(this.textureHandle) {
+			gl.bindTexture(gl.TEXTURE_2D, this.textureHandle);
+			shader.SetUniform("TextureID", this.textureHandle);
+		}
     if (this.wireframe_mode == 0) {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.vboIndex);
         gl.drawElements(gl.TRIANGLES, this.vertex_indices.length, gl.UNSIGNED_SHORT, 0);
@@ -122,5 +199,7 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 
 
 Mesh.prototype.TakeDown = function () {
-    
+    gl.deleteBuffer(vboHandle);
+    gl.deleteBuffer(vboIndex);
+    gl.deleteBuffer(vboWireframe);
 }

@@ -5,11 +5,41 @@ var squareVerticesColorBuffer;
 var mvMatrix;
 var perspectiveMatrix;
 var squareRotation = 0.0;
+var cameraPosition = [0, 0, 3];
+var cameraTarget = [0, 0, 0];
+var cameraUp = [0, 1, 0];
 
 function doKeyDown(e) {
-    if (e.keyCode == 87) {  // && e.ctrlKey
-        mesh.wireframe_mode = (mesh.wireframe_mode == 0 ? 1 : 0);
-    }
+	switch(e.keyCode) {
+	case 87:// && e.ctrlKey
+		mesh.wireframe_mode = (mesh.wireframe_mode == 0 ? 1 : 0);
+		sphere.wireframe_mode = (mesh.wireframe_mode == 0 ? 1 : 0);
+		break;
+	case 37: //left arrow
+		cameraPosition[0]--;
+		cameraTarget[0]--;
+		break;
+	case 39: //right arrow
+		cameraPosition[0]++;
+		cameraTarget[0]++;
+		break;
+	case 38: //up arrow
+		cameraPosition[1]++;
+		cameraTarget[1]++;
+		break;
+	case 40: //down arrow
+		cameraPosition[1]--;
+		cameraTarget[1]--;
+		break;
+	case 109: //subtract
+		cameraPosition[2]++;
+		cameraTarget[2]++;
+		break;
+	case 107: //add
+		cameraPosition[2]--;
+		cameraTarget[2]--;
+		break;
+	}
 }
 document.addEventListener("keydown", doKeyDown, true);
 
@@ -42,6 +72,11 @@ function start() {
 
     mesh = new Mesh();
     mesh.Init(20, 20);
+    mesh.LoadTexture('img/mars.jpg');
+    
+    sphere = new Mesh();
+    sphere.Sphere(20, 20);
+    sphere.LoadTexture('img/mars.jpg');
     
     // Set up to draw the scene periodically.
     
@@ -95,11 +130,12 @@ function drawScene() {
   // drawing the square.
   
   mvMatrix = makeLookAt(
-      0, 0, 3,  //Camera Position
-      0, 0, 0,  //Pointing Towards
-      0, 1, 0); //Up Vector
+      cameraPosition[0], cameraPosition[1], cameraPosition[2],  //Camera Position
+      cameraTarget[0], cameraTarget[1], cameraTarget[2],  //Camera Target
+      cameraUp[0], cameraUp[1], cameraUp[2]);  //Up Vector
 
-  mesh.Draw(shader, mvMatrix, perspectiveMatrix);
+  //mesh.Draw(shader, mvMatrix, perspectiveMatrix);
+  sphere.Draw(shader, mvMatrix, perspectiveMatrix);
 }
 
 //
@@ -124,31 +160,7 @@ function initShaders() {
     shader.SetUniform("Material.Shininess", 50.0);
 
     shader.SetUniform("Light[0].Position", [1, 1, 1, 1]);
-    shader.SetUniform("Light[0].Intensity", [0.8, 0.8, 0.8]);
+    shader.SetUniform("Light[0].Intensity", [0.8, 0.8, 1.0]);
     shader.SetUniform("Light[1].Position", [-1, -1, 1, 1]);
-    shader.SetUniform("Light[1].Intensity", [0.6, 0.6, 0.6]);
-}
-
-//
-// Matrix utility functions
-//
-
-function loadIdentity() {
-  mvMatrix = Matrix.I(4);
-}
-
-function multMatrix(m) {
-  mvMatrix = mvMatrix.x(m);
-}
-
-function mvTranslate(v) {
-  multMatrix(Matrix.Translation($V([v[0], v[1], v[2]])).ensure4x4());
-}
-
-function setMatrixUniforms() {
-  var pUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-  gl.uniformMatrix4fv(pUniform, false, new Float32Array(perspectiveMatrix.flatten()));
-
-  var mvUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-  gl.uniformMatrix4fv(mvUniform, false, new Float32Array(mvMatrix.flatten()));
+    shader.SetUniform("Light[1].Intensity", [0.6, 1.0, 0.6]);
 }

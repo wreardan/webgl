@@ -76,7 +76,10 @@ Shader.prototype.SetUniform = function(uniformName, value) {
 		this.uniforms[uniformName] = gl.getUniformLocation(this.shaderProgram, uniformName);
 	}
 	if(!value.length && !(value.elements && value.elements.length)) {
-	    gl.uniform1f(this.uniforms[uniformName], value);
+		if(typeof(value) == "number")
+			gl.uniform1f(this.uniforms[uniformName], value);
+		else
+			gl.uniform1i(this.uniforms[uniformName], value);
 	} else if (value.length == 3) {
 	    gl.uniform3fv(this.uniforms[uniformName], value);
 	} else if (value.length == 4) {
