@@ -1,19 +1,20 @@
+//WebGL (C) Wesley Reardan 2013
 var canvas;
 var gl;
-var squareVerticesBuffer;
-var squareVerticesColorBuffer;
-var mvMatrix;
-var perspectiveMatrix;
-var squareRotation = 0.0;
 var cameraPosition = [0, 0, 3];
 var cameraTarget = [0, 0, 0];
 var cameraUp = [0, 1, 0];
+var drawMode = 0;
+var lastTime = Date.now();
 
+//Handle Keyboard Input
 function doKeyDown(e) {
 	switch(e.keyCode) {
-	case 87:// && e.ctrlKey
+	case 87://W key, for + Ctrl= && e.ctrlKey
 		mesh.wireframe_mode = (mesh.wireframe_mode == 0 ? 1 : 0);
-		sphere.wireframe_mode = (mesh.wireframe_mode == 0 ? 1 : 0);
+		sphere.wireframe_mode = mesh.wireframe_mode;
+		cylinder.wireframe_mode = mesh.wireframe_mode;
+		mars.wireframe_mode = mesh.wireframe_mode;
 		break;
 	case 37: //left arrow
 		cameraPosition[0]--;
@@ -39,16 +40,16 @@ function doKeyDown(e) {
 		cameraPosition[2]--;
 		cameraTarget[2]--;
 		break;
+	case 115: //change mode
+		drawMode++;
+		if(drawMode > 3) drawMode = 0;
+		break;
 	}
 }
 document.addEventListener("keydown", doKeyDown, true);
 
-//
-// start
-//
 // Called when the canvas is created to get the ball rolling.
 // Figuratively, that is. There's nothing moving in this demo.
-//
 function start() {
   canvas = document.getElementById("glcanvas");
 
@@ -62,13 +63,9 @@ function start() {
     gl.enable(gl.DEPTH_TEST);           // Enable depth testing
     gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
     
-    // Initialize the shaders; this is where all the lighting for the
-    // vertices and so forth is established.
-    
     initShaders();
     
-    // Here's where we call the routine that builds all the objects
-    // we'll be drawing.
+    // This should go into a Scene, then Init Here.
 
     mesh = new Mesh();
     mesh.Init(20, 20);
@@ -76,7 +73,17 @@ function start() {
     
     sphere = new Mesh();
     sphere.Sphere(20, 20);
-    sphere.LoadTexture('img/mars.jpg');
+		sphere.Init(20, 20);
+    sphere.textureHandle = mesh.textureHandle;
+    
+    cylinder = new Mesh();
+    cylinder.Cylinder(20, 20);
+		cylinder.Init(20, 20);
+    cylinder.LoadTexture('img/metal.jpg');
+    
+    mars = new Mars();
+    mars.InitMars();
+    mars.textureHandle = mesh.textureHandle;
     
     // Set up to draw the scene periodically.
     
@@ -106,43 +113,39 @@ function initWebGL() {
   }
 }
 
-//
-// drawScene
-//
 // Draw the scene.
-//
 function drawScene() {
-  // Clear the canvas before we start drawing on it.
-
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   
-  // Establish the perspective with which we want to view the
-  // scene. Our field of view is 45 degrees, with a width/height
-  // ratio of 640:480, and we only want to see objects between 0.1 units
-  // and 100 units away from the camera.
-  
-  perspectiveMatrix = makePerspective(45, 800.0/600.0, 0.1, 100.0);
-  
-  // Set the drawing position to the "identity" point, which is
-  // the center of the scene.
-  
-  // Now move the drawing position a bit to where we want to start
-  // drawing the square.
-  
-  mvMatrix = makeLookAt(
-      cameraPosition[0], cameraPosition[1], cameraPosition[2],  //Camera Position
-      cameraTarget[0], cameraTarget[1], cameraTarget[2],  //Camera Target
-      cameraUp[0], cameraUp[1], cameraUp[2]);  //Up Vector
+  var perspectiveMatrix = mat4.create();
+  mat4.perspective(perspectiveMatrix, 45, 800.0 / 600.0, 0.1, 100.0);
+  var mvMatrix = mat4.create();
+  mat4.lookAt( mvMatrix, cameraPosition, cameraTarget, cameraUp);
 
-  //mesh.Draw(shader, mvMatrix, perspectiveMatrix);
-  sphere.Draw(shader, mvMatrix, perspectiveMatrix);
+	switch(drawMode)
+	{
+	case 0:
+		mars.Draw(shader, mvMatrix, perspectiveMatrix);
+		break;
+	case 1:
+		sphere.Draw(shader, mvMatrix, perspectiveMatrix);
+		break;
+	case 2:
+		cylinder.Draw(shader, mvMatrix, perspectiveMatrix);
+		break;
+	default: //case 0:
+		mesh.Draw(shader, mvMatrix, perspectiveMatrix);
+		break;
+  }
+  
+  var fps_div = document.getElementById("fps");
+  
+  var current_time = Date.now();
+  fps_div.innerHTML = (1000 / (lastTime - current_time)) + " fps";
+  lastTime = current_time;
 }
 
-//
-// initShaders
-//
 // Initialize the shaders, so WebGL knows how to light our scene.
-//
 function initShaders() {
     
     shader = new Shader();

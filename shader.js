@@ -1,3 +1,4 @@
+//WebGL (C) Wesley Reardan 2013
 function Shader() {
 	this.shaderProgram = null;
 	this.linked = false;
@@ -80,18 +81,16 @@ Shader.prototype.SetUniform = function(uniformName, value) {
 			gl.uniform1f(this.uniforms[uniformName], value);
 		else
 			gl.uniform1i(this.uniforms[uniformName], value);
+	} else if (value.length == 2) {
+	    gl.uniform2fv(this.uniforms[uniformName], value);
 	} else if (value.length == 3) {
 	    gl.uniform3fv(this.uniforms[uniformName], value);
 	} else if (value.length == 4) {
 	    gl.uniform4fv(this.uniforms[uniformName], value);
-	} else if (value.elements.length == 3) {
-	    if (value.elements[0].length == 3)
-	        gl.uniformMatrix3fv(new Float32Array(value.flatten()));
-	    else throw ("Shader.SetUniform: unsupported type for parameter 'value'");
-	} else if (value.elements.length == 4) {
-	    if (value.elements[0].length == 4)
-	        gl.uniformMatrix4fv(this.uniforms[uniformName], false, new Float32Array(value.flatten()));
-	    else throw ("Shader.SetUniform: unsupported type for parameter 'value'");
+	} else if (value.length == 9) {
+	    gl.uniformMatrix3fv(this.uniforms[uniformName], false, value);
+	} else if (value.length == 16) {
+	    gl.uniformMatrix4fv(this.uniforms[uniformName], false, value);
 	}
 	else throw ("Shader.SetUniform: unsupported type for parameter 'value'");
 };

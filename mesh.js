@@ -1,5 +1,6 @@
+//WebGL (C) Wesley Reardan 2013
 function Mesh() {
-    this.vertices = [];	//vec3 Position, vec3 Color, vec3 Normal, vec2 TexturePosition
+    this.vertices = [];	//vec4 Position, vec4 Color, vec4 Normal, vec4 TexturePosition
     this.vertex_indices = [];
     this.wireframe_indices = [];
     this.textures = [];
@@ -10,23 +11,22 @@ function Mesh() {
     this.textureHandle = null;
     this.width = -1;
     this.height = -1;
-}
-
-function HandleTextureLoaded(image, texture) {
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-  gl.generateMipmap(gl.TEXTURE_2D);
-  gl.bindTexture(gl.TEXTURE_2D, null);
+    this.vboNormal = this.vboNormalIndex -1;
 }
 
 Mesh.prototype.LoadTexture = function (filename)
 {
-	var texture = this.textureHandle = gl.createTexture();
-	image = new Image();
-	image.onload = function() { HandleTextureLoaded(image, texture); }
+	var texture = gl.createTexture();
+	var image = new Image();
+	image.onload = function() {
+		gl.bindTexture(gl.TEXTURE_2D, texture);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
+		gl.bindTexture(gl.TEXTURE_2D, null);
+	}
 	image.src = filename;
+	this.textureHandle = texture;
 }
 
 Mesh.prototype.rawVertices = function () {
@@ -54,9 +54,32 @@ Mesh.prototype.rawVertices = function () {
     return data;
 }
 
+Mesh.prototype.BuildNormalGeometry = function () {
+    var normalVertices = [];
+    var normalIndices = [];
+    var index = 0;
+    for (var y = 0; y < this.height; y++) {
+        for (var x = 0; x < this.width; x++) {
+            var vertex = this.vertices[y*this.width+x] = {};
+            vertex.position = [2.0 * x_one * x - 1.0, 2 * y_one * y - 1, 0.0, 1.0];
+            vertex.color = [1.0, 1.0, 1.0, 1.0];
+            vertex.normal = [0.0, 0.0, 1.0, 0.0];
+            vertex.tex = [x_one * x, y_one * y, 1337.0, 1337.0];
+
+            vertex = this.vertices[y*this.width+x+1] = {};
+            vertex.position = this.vertices[index + 1];
+            vertex.color = [1.0, 1.0, 1.0, 1.0];
+            vertex.normal = [0.0, 0.0, 1.0, 0.0];
+            vertex.tex = [x_one * x, y_one * y, 1337.0, 1337.0];
+
+            index += 2;
+        }
+    }
+}
+
 Mesh.prototype.Init = function(width, height) {
 	if(width * height > 65535)
-		throw("Mesh.Init: WebGL 1.0 limited to 65535 (ushort) vertices/Model");
+		throw("Mesh.Init: WebGL 1.0 limited to 65535 (ushort) vertices/Model; However, I will get chunked Meshes working in a future version and this limitation will be removed.");
 		
 		this.width = width;
 		this.height = height;
@@ -148,7 +171,6 @@ Mesh.prototype.Sphere = function(width, height) {
 			index++;
 		}
 	}
-	this.Init(width, height);
 }
 
 Mesh.prototype.Cylinder = function(width, height) {
@@ -162,16 +184,15 @@ Mesh.prototype.Cylinder = function(width, height) {
 		for (var c = 0; c < width; ++c) {
 			var vertex = this.vertices[r * width + c] = {};
 			var x = Math.cos(2 * Math.PI * c * S);
-			var y = r * R * 1.0; //last term is height
-			var z = Math.sin( Math.PI * r * R );
+			var y = 1.0 - r * R * 2.0; //last term is height
+			var z = Math.sin(2 * Math.PI * c * S);
 			vertex.position = [x * 1.0, y * 1.0, z * 1.0, 1.0];
 			vertex.color = [1.0, 1.0, 1.0, 1.0];
 			vertex.normal = vertex.position;
-			vertex.tex = [S * x, R * y, 1337.0, 1337.0];
+			vertex.tex = [S * r, R * c, 1337.0, 1337.0];
 			index++;
 		}
 	}
-	this.Init(width, height);
 }
 
 Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
@@ -183,7 +204,10 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
     shader.BindAttribute("VertexTexture", 4, 16 * 4, 16*3);
     shader.SetUniform("ProjectionMatrix", projection);
     shader.SetUniform("ModelViewMatrix", modelview);
-    shader.SetUniform("NormalMatrix", modelview.transpose().inverse());
+    var normalMatrix = mat4.create();
+    mat4.transpose(normalMatrix, modelview);
+    mat4.invert(normalMatrix, normalMatrix);
+    shader.SetUniform("NormalMatrix", normalMatrix);
     if(this.textureHandle) {
 			gl.bindTexture(gl.TEXTURE_2D, this.textureHandle);
 			shader.SetUniform("TextureID", this.textureHandle);
