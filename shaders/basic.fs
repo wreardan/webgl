@@ -1,31 +1,4 @@
-<html>
-<head><title>WebGL Wes's Sandbox</title>
-<!-- Vertex Shader -->
-<script id="shader-vs" type="x-shader/x-vertex">
-attribute vec4 VertexPosition;
-attribute vec4 VertexColor;
-attribute vec4 VertexNormal;
-attribute vec4 VertexTexture;
-    
-uniform mat4 ModelViewMatrix;
-uniform mat4 ProjectionMatrix;
-uniform mat4 NormalMatrix;
-      
-varying lowp vec4 Position;
-varying lowp vec4 Color;
-varying lowp vec4 Normal;
-varying lowp vec4 Texture;
 
-void main(void) {
-    gl_Position = ProjectionMatrix * ModelViewMatrix * VertexPosition;
-    Color = VertexColor;
-    Position = VertexPosition;
-    Normal = NormalMatrix * VertexNormal;
-    Texture = VertexTexture;
-}
-</script>
-<!-- Fragment Shader -->
-<script id="shader-fs" type="x-shader/x-fragment">
 varying lowp vec4 Position;
 varying lowp vec4 Color;
 varying lowp vec4 Normal;
@@ -69,25 +42,3 @@ void main(void) {
     lowp vec4 t_color = texture2D(TextureID, vec2(Texture));
     gl_FragColor = Color * vec4(phong, 1.0) * t_color;
 }
-</script>
-
-<script src="js/jquery-1.10.2.js"></script>
-<script src="js/gl-matrix.js"></script>
-<script src="res/mars_low_rez.js"></script>
-<script src="shader.js"></script>
-<script src="mesh.js"></script>
-<script src="mars.js"></script>
-<script src="main.js"></script>
-</head>
-<body onload="start()">
-	<canvas id="glcanvas" width="1024" height="768">Need WebGL Support</canvas>
-	<div id="fps"></div>
-	<h3>Controls</h3>
-	<ol>
-	<li>F4 - Change Display Object</li>
-	<li>W = Toggle Wireframe Mode</li>
-	<li>Left/Right/Up/Down/+/- = Move Camera</li>
-	<ol>
-	
-</body>
-</html>

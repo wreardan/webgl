@@ -29,6 +29,10 @@ Mesh.prototype.LoadTexture = function (filename)
 	this.textureHandle = texture;
 }
 
+Mesh.prototype.GenerateNormals = function () {
+
+}
+
 Mesh.prototype.rawVertices = function () {
     var data = [];
     var index = 0;
@@ -57,22 +61,8 @@ Mesh.prototype.rawVertices = function () {
 Mesh.prototype.BuildNormalGeometry = function () {
     var normalVertices = [];
     var normalIndices = [];
-    var index = 0;
     for (var y = 0; y < this.height; y++) {
         for (var x = 0; x < this.width; x++) {
-            var vertex = this.vertices[y*this.width+x] = {};
-            vertex.position = [2.0 * x_one * x - 1.0, 2 * y_one * y - 1, 0.0, 1.0];
-            vertex.color = [1.0, 1.0, 1.0, 1.0];
-            vertex.normal = [0.0, 0.0, 1.0, 0.0];
-            vertex.tex = [x_one * x, y_one * y, 1337.0, 1337.0];
-
-            vertex = this.vertices[y*this.width+x+1] = {};
-            vertex.position = this.vertices[index + 1];
-            vertex.color = [1.0, 1.0, 1.0, 1.0];
-            vertex.normal = [0.0, 0.0, 1.0, 0.0];
-            vertex.tex = [x_one * x, y_one * y, 1337.0, 1337.0];
-
-            index += 2;
         }
     }
 }
