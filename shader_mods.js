@@ -104,42 +104,38 @@ Shader.prototype.Use = function() {
   gl.useProgram(this.shaderProgram);
 };
 Shader.prototype.BindAttribute = function(attributeName, num_elements, stride, offset) {
-	if(this.shaderProgram) {
-		if(this.attributes[attributeName] == null || this.attributes[attributeName] == -1) {
-			this.attributes[attributeName] = gl.getAttribLocation(this.shaderProgram, attributeName);
-			gl.enableVertexAttribArray(this.attributes[attributeName]);
-		}
-		else
-  		gl.vertexAttribPointer(shader.attributes[attributeName], num_elements, gl.FLOAT, false, stride, offset);
-	}
+	if(this.attributes[attributeName] == -1 || this.attributes[attributeName] == null) {
+		this.attributes[attributeName] = gl.getAttribLocation(this.shaderProgram, attributeName);
+		gl.enableVertexAttribArray(this.attributes[attributeName]);
+	} else
+  	gl.vertexAttribPointer(shader.attributes[attributeName], num_elements, gl.FLOAT, false, stride, offset);
 };
 Shader.prototype.SetUniform = function(uniformName, value) {
-	if(this.shaderProgram) {
-		if(this.uniforms[uniformName] == null || this.uniforms[uniformName] == -1) {
-			this.uniforms[uniformName] = gl.getUniformLocation(this.shaderProgram, uniformName);
-		}
-		if(this.uniforms[uniformName] == null || this.uniforms[uniformName] == -1
-				|| this.shaderProgram == null || this.shaderProgram == -1) {
-			console.log("SetUniform called before Shader has been loaded.");
-			return;
-		}
-		if(!value.length || value.length == 1) {
-			if(typeof(value) == "number")
-				gl.uniform1f(this.uniforms[uniformName], value);
-			else
-				gl.uniform1i(this.uniforms[uniformName], value);
-		} else if (value.length == 2) {
-		    gl.uniform2fv(this.uniforms[uniformName], value);
-		} else if (value.length == 3) {
-		    gl.uniform3fv(this.uniforms[uniformName], value);
-		} else if (value.length == 4) {
-		    gl.uniform4fv(this.uniforms[uniformName], value);
-		} else if (value.length == 9) {
-		    gl.uniformMatrix3fv(this.uniforms[uniformName], false, value);
-		} else if (value.length == 16) {
-		    gl.uniformMatrix4fv(this.uniforms[uniformName], false, value);
-		} else throw ("Shader.SetUniform: unsupported type for parameter 'value'");
+	if(this.shaderProgram && (this.uniforms[uniformName] == null || this.uniforms[uniformName] == -1)) {
+		this.uniforms[uniformName] = gl.getUniformLocation(this.shaderProgram, uniformName);
 	}
+	if(this.uniforms[uniformName] == null || this.uniforms[uniformName] == -1
+			|| this.shaderProgram == null || this.shaderProgram == -1) {
+		console.log("SetUniform called before Shader has been loaded.");
+		return;
+	}
+	if(!value.length || value.length == 1) {
+		if(typeof(value) == "number")
+			gl.uniform1f(this.uniforms[uniformName], value);
+		else
+			gl.uniform1i(this.uniforms[uniformName], value);
+	} else if (value.length == 2) {
+	    gl.uniform2fv(this.uniforms[uniformName], value);
+	} else if (value.length == 3) {
+	    gl.uniform3fv(this.uniforms[uniformName], value);
+	} else if (value.length == 4) {
+	    gl.uniform4fv(this.uniforms[uniformName], value);
+	} else if (value.length == 9) {
+	    gl.uniformMatrix3fv(this.uniforms[uniformName], false, value);
+	} else if (value.length == 16) {
+	    gl.uniformMatrix4fv(this.uniforms[uniformName], false, value);
+	}
+	else throw ("Shader.SetUniform: unsupported type for parameter 'value'");
 };
 Shader.prototype.PrintActiveUniforms = function() {
 };

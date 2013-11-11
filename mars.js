@@ -9,6 +9,9 @@ Mars.prototype = new Mesh();
 Mars.prototype.constructor = Mars;
 
 Mars.prototype.InitMars = function(){
+	this.width = width;
+	this.height = height;
+
 	var scalar = 0.1;
 	var index = 0;
 	//Read in coordinates
@@ -24,5 +27,10 @@ Mars.prototype.InitMars = function(){
 			index++;
 		}
 	}
-	this.Init(width, height);
+
+	this.GenerateIndices(width, height);
+	this.CalculateNormals();
+
+	this.StoreVertices(width, height);
+  this.StoreIndices(width, height);
 }

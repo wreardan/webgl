@@ -84,6 +84,7 @@ function start() {
     mars = new Mars();
     mars.InitMars();
     mars.textureHandle = mesh.textureHandle;
+    //mars.BuildNormalVisualizationGeometry();
     
     // Set up to draw the scene periodically.
     
@@ -151,11 +152,12 @@ function initShaders() {
     shader = new Shader();
 	
     shader.Init("shader-vs", "shader-fs");
+    //shader.InitFromFiles("shaders/basic.vs", "shaders/basic.fs");
   
-    shader.EnableAttribute("VertexPosition");
+    /*shader.EnableAttribute("VertexPosition");
     shader.EnableAttribute("VertexColor");
     shader.EnableAttribute("VertexNormal");
-    shader.EnableAttribute("VertexTexture");
+    shader.EnableAttribute("VertexTexture");*/
 
     shader.SetUniform("Material.Ka", [0.1, 0.1, 0.1]);
     shader.SetUniform("Material.Kd", [0.9, 0.9, 0.9]);
