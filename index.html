@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head><title>WebGL Wes's Sandbox</title>
 <!-- Vertex Shader -->
@@ -87,10 +88,42 @@ void main(void) {
     gl_FragColor = Color * vec4(phong, 1.0) * t_color;
 }
 </script>
+<!-- Simple Vertex Shader -->
+<script id="solid-vs" type="x-shader/x-vertex">
+#ifdef GL_ES
+  precision mediump float;
+#endif
+
+attribute vec4 VertexPosition;
+attribute vec4 VertexColor;
+    
+uniform mat4 ModelViewMatrix;
+uniform mat4 ProjectionMatrix;
+      
+varying vec4 Color;
+
+void main(void) {
+  gl_Position = ProjectionMatrix * ModelViewMatrix * VertexPosition;
+  Color = VertexColor;
+}
+</script>
+<!-- Simple Fragment Shader -->
+<script id="solid-fs" type="x-shader/x-fragment">
+#ifdef GL_ES
+  precision mediump float;
+#endif
+
+varying vec4 Color;
+    	
+void main(void) {
+    gl_FragColor = Color;
+}
+</script>
 
 <script src="js/jquery-1.10.2.js"></script>
 <script src="js/gl-matrix.js"></script>
 <script src="res/mars_low_rez.js"></script>
+<script src="res/desk.js"></script>
 <script src="shader.js"></script>
 <script src="mesh.js"></script>
 <script src="mars.js"></script>

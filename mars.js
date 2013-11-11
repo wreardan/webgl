@@ -9,14 +9,12 @@ Mars.prototype = new Mesh();
 Mars.prototype.constructor = Mars;
 
 Mars.prototype.InitMars = function(){
-	this.width = width;
-	this.height = height;
 
 	var scalar = 0.1;
 	var index = 0;
 	//Read in coordinates
-	var width = mars_low_rez[index++];
-	var height = mars_low_rez[index++];
+	var width = this.width = mars_low_rez[index++];
+	var height = this.height = mars_low_rez[index++];
 	this.Sphere.call(this, width, height);
 	for(var y = 0; y < height; y++) {
 		for(var x = 0; x < width; x++) {

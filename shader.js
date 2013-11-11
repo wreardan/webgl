@@ -9,8 +9,8 @@ function Shader() {
 Shader.prototype.Init = function(vertexShader, fragmentShader) {
 	this.CompileShaderFromScript(vertexShader);
 	this.CompileShaderFromScript(fragmentShader);
-  shader.Link();
-  shader.Use();
+  this.Link();
+  this.Use();
 }
 Shader.prototype.InitFromFiles = function(vertexShaderFilename, fragmentShaderFilename) {
 	this.CompileShaderFromFile(vertexShaderFilename);
@@ -110,7 +110,7 @@ Shader.prototype.BindAttribute = function(attributeName, num_elements, stride, o
 			gl.enableVertexAttribArray(this.attributes[attributeName]);
 		}
 		else
-  		gl.vertexAttribPointer(shader.attributes[attributeName], num_elements, gl.FLOAT, false, stride, offset);
+  		gl.vertexAttribPointer(this.attributes[attributeName], num_elements, gl.FLOAT, false, stride, offset);
 	}
 };
 Shader.prototype.SetUniform = function(uniformName, value) {

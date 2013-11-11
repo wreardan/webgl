@@ -4,8 +4,10 @@ var gl;
 var cameraPosition = [0, 0, 3];
 var cameraTarget = [0, 0, 0];
 var cameraUp = [0, 1, 0];
+var marsRotation = mat4.create();
 var drawMode = 0;
 var lastTime = Date.now();
+var drawNormals = false;
 
 //Handle Keyboard Input
 function doKeyDown(e) {
@@ -15,6 +17,9 @@ function doKeyDown(e) {
 		sphere.wireframe_mode = mesh.wireframe_mode;
 		cylinder.wireframe_mode = mesh.wireframe_mode;
 		mars.wireframe_mode = mesh.wireframe_mode;
+		break;
+	case 78://N key
+		drawNormals = ! drawNormals;
 		break;
 	case 37: //left arrow
 		cameraPosition[0]--;
@@ -48,6 +53,32 @@ function doKeyDown(e) {
 }
 document.addEventListener("keydown", doKeyDown, true);
 
+//Handle Mouse based input
+var mouseDown = false;
+var lastMouseX = null;
+var lastMouseY = null;
+
+var moonRotationMatrix = mat4.create();
+mat4.identity(moonRotationMatrix);
+
+function handleMouseDown(event) {
+	event.preventDefault();
+	console.log("mouse down (" + event.x + "," + event.y + ")");
+}
+
+function handleMouseUp(event) {
+	event.preventDefault();
+	console.log("mouse up (" + event.x + "," + event.y + ")");
+}
+
+function handleMouseMove(event) {
+	event.preventDefault();
+	console.log("mouse move (" + event.x + "," + event.y + ")");
+}
+document.onmousedown = handleMouseDown;
+document.onmouseup = handleMouseUp;
+//document.mousemove = handleMouseMove;
+
 // Called when the canvas is created to get the ball rolling.
 // Figuratively, that is. There's nothing moving in this demo.
 function start() {
@@ -75,6 +106,7 @@ function start() {
     sphere.Sphere(20, 20);
 		sphere.Init(20, 20);
     sphere.textureHandle = mesh.textureHandle;
+    sphere.BuildNormalVisualizationGeometry();
     
     cylinder = new Mesh();
     cylinder.Cylinder(20, 20);
@@ -84,7 +116,7 @@ function start() {
     mars = new Mars();
     mars.InitMars();
     mars.textureHandle = mesh.textureHandle;
-    //mars.BuildNormalVisualizationGeometry();
+    mars.BuildNormalVisualizationGeometry();
     
     // Set up to draw the scene periodically.
     
@@ -116,6 +148,13 @@ function initWebGL() {
 
 // Draw the scene.
 function drawScene() {
+ //update time
+  var fps_div = document.getElementById("fps");
+  var current_time = Date.now();
+  var delta_time = (lastTime - current_time);
+  fps_div.innerHTML = (1000.0 / delta_time) + " fps";
+  lastTime = current_time;
+
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   
   var perspectiveMatrix = mat4.create();
@@ -123,6 +162,8 @@ function drawScene() {
   var mvMatrix = mat4.create();
   mat4.lookAt( mvMatrix, cameraPosition, cameraTarget, cameraUp);
 
+	mat4.rotate(marsRotation, marsRotation, delta_time * 0.0001, vec3.fromValues(0,1,0));
+	mat4.multiply(mvMatrix, mvMatrix, marsRotation);
 	switch(drawMode)
 	{
 	case 0:
@@ -138,12 +179,6 @@ function drawScene() {
 		mesh.Draw(shader, mvMatrix, perspectiveMatrix);
 		break;
   }
-  
-  var fps_div = document.getElementById("fps");
-  
-  var current_time = Date.now();
-  fps_div.innerHTML = (1000 / (lastTime - current_time)) + " fps";
-  lastTime = current_time;
 }
 
 // Initialize the shaders, so WebGL knows how to light our scene.
@@ -168,4 +203,8 @@ function initShaders() {
     shader.SetUniform("Light[0].Intensity", [0.8, 0.8, 1.0]);
     shader.SetUniform("Light[1].Position", [-1, -1, 1, 1]);
     shader.SetUniform("Light[1].Intensity", [0.6, 1.0, 0.6]);
+
+    solidShader = new Shader();
+    solidShader.Init("solid-vs", "solid-fs");
+
 }

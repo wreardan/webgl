@@ -4,15 +4,40 @@ function Mesh() {
     this.vertex_indices = [];
     this.wireframe_indices = [];
     this.textures = [];
+    this.normalVertices = [];
+    this.normalIndices = [];
     this.vboVertices = null;
     this.vboIndex = null;
     this.vboWireframe = null;
     this.vboNormals = null;
+    this.vboNormalIndices = null;
     this.wireframe_mode = 0;
     this.textureHandle = null;
     this.width = -1;
     this.height = -1;
-    this.vboNormal = this.vboNormalIndex -1;
+}
+
+Mesh.prototype.LoadModel = function (model, textureFilename) {
+	if(textureFilename)
+		this.LoadTexture(textureFilename);
+
+//Load Vertices from object
+	var index = 0;
+	for(var i = 0; i < model.metadata.vertices; i++) {
+		var vertex = this.vertices[i] = {};
+		vertex.position = [0,0,0,1];
+		vertex.position[0] = model.vertices[index++];
+		vertex.position[1] = model.vertices[index++];
+		vertex.position[2] = model.vertices[index++];
+		vertex.color = [1,1,1,1];
+		var normalIndex = i % mode.normals.length;
+		vertex.normal = [0,0,0,0];
+		vertex.normal[0] = model.normals[index-2];
+		vertex.normal[0] = model.normals[index-1];
+		vertex.normal[0] = model.normals[index];
+
+	}
+//Load Faces
 }
 
 Mesh.prototype.LoadTexture = function (filename)
@@ -84,27 +109,57 @@ Mesh.prototype.rawVertices = function () {
     return data;
 }
 
+
+Mesh.prototype.rawNormalVertices = function () {
+    var data = [];
+    var index = 0;
+    for (var i = 0; i < this.normalVertices.length; i++) {
+        var vertex = this.normalVertices[i];
+        data[index++] = vertex.position[0];
+        data[index++] = vertex.position[1];
+        data[index++] = vertex.position[2];
+        data[index++] = vertex.position[3];
+        data[index++] = vertex.color[0];
+        data[index++] = vertex.color[1];
+        data[index++] = vertex.color[2];
+        data[index++] = vertex.color[3];
+    }
+    return data;
+}
+
 Mesh.prototype.BuildNormalVisualizationGeometry = function () {
-    var normalScalar = 0.125;
+  	solidShader.Use();
+    var normalScalar = 0.05;
     var normalVertices = [];
+    var normalIndices = [];
     var index = 0;
     for (var y = 0; y < this.height; y++) {
         for (var x = 0; x < this.width; x++) {
-            var vertex = this.vertices[y * this.width + x] = {};
-            var normalVertex1 = {};
-            var normalVertex2 = {};
-            normalVertex1.position = vertex.position;
-            normalVertex1.color = [1.0, 1.0, 1.0, 1.0];
-            normalVertex2.position = vertex.position + vertex.normal ;
-            normalVertex2.color = [1.0, 1.0, 1.0, 1.0];
-            normalVertices.push(normalVertex1);
-            normalVertices.push(normalVertex2);
+          var vertex = this.vertices[y * this.width + x];
+          var normalVertex1 = {};
+          var normalVertex2 = {position:[]};
+          normalVertex1.position = vec4.clone(vertex.position);
+          normalVertex1.color = [1.0, 1.0, 1.0, 1.0];
+          var scaledNormal = [0,0,0,0];
+          vec3.scale(scaledNormal, vertex.normal, normalScalar);
+          vec4.add(normalVertex2.position, vertex.position, scaledNormal);
+          normalVertex2.color = [1.0, 1.0, 1.0, 1.0];
+          normalVertices.push(normalVertex1);
+          normalVertices.push(normalVertex2);
+          normalIndices.push(index++);
+          normalIndices.push(index++);
         }
     }
-    //Create VBO
+    this.normalVertices = normalVertices;
+    this.normalIndices = normalIndices;
+    //Create VBOs
     this.vboNormals = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vboNormals);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.rawVertices()), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.rawNormalVertices()), gl.STATIC_DRAW);
+
+    this.vboNormalIndices = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.vboNormalIndices);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.normalIndices), gl.STATIC_DRAW);
 }
 
 Mesh.prototype.GenerateIndices = function(width, height) {
@@ -260,6 +315,17 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 	    } else if (this.wireframe_mode == 1) {
 	        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.vboWireframe);
 	        gl.drawElements(gl.LINES, this.wireframe_indices.length, gl.UNSIGNED_SHORT, 0);
+	    }
+	    if(drawNormals && this.vboNormals && this.vboNormalIndices) {
+	    	solidShader.Use();
+	    	gl.bindBuffer(gl.ARRAY_BUFFER, this.vboNormals);
+	    	solidShader.BindAttribute("VertexPosition", 4, 32, 0);
+	    	solidShader.BindAttribute("VertexColor", 4, 32, 16);
+		    solidShader.SetUniform("ProjectionMatrix", projection);
+		    solidShader.SetUniform("ModelViewMatrix", modelview);
+        //gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.vboNormalIndices);
+        //gl.drawElements(gl.LINES, this.normalIndices.length, gl.UNSIGNED_SHORT, 0);
+        gl.drawArrays(gl.LINES, 0, this.normalVertices.length);
 	    }
 	  }
 }
