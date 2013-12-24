@@ -263,7 +263,7 @@ Mesh.prototype.Sphere = function(width, height) {
 			vertex.position = [x * 1.0, y * 1.0, z * 1.0, 1.0];
 			vertex.color = [1.0, 1.0, 1.0, 1.0];
 			vertex.normal = vertex.position;
-			vertex.tex = [S * r, R * c, 1337.0, 1337.0];
+			vertex.tex = [R * c, S * r, 1337.0, 1337.0];
 			index++;
 		}
 	}
