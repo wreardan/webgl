@@ -24,7 +24,7 @@ varying vec4 Texture;
 void main(void) {
   gl_Position = ProjectionMatrix * ModelViewMatrix * VertexPosition;
   Color = VertexColor;
-  Position = VertexPosition;
+  Position = ModelViewMatrix * VertexPosition;
   Normal = NormalMatrix * VertexNormal;
   Texture = VertexTexture;
 }
@@ -127,6 +127,7 @@ void main(void) {
 <script src="shader.js"></script>
 <script src="mesh.js"></script>
 <script src="mars.js"></script>
+<script src="framebuffer.js"></script>
 <script src="main.js"></script>
 </head>
 <body onload="start()">

@@ -8,6 +8,7 @@ var marsRotation = mat4.create();
 var drawMode = 0;
 var lastTime = Date.now();
 var drawNormals = false;
+var fbo;
 
 //Handle Keyboard Input
 function doKeyDown(e) {
@@ -101,26 +102,31 @@ function start() {
     mesh = new Mesh();
     mesh.Init(20, 20);
     mesh.LoadTexture('img/mars.jpg');
+    mesh.BuildNormalVisualizationGeometry();
     
     sphere = new Mesh();
     sphere.Sphere(20, 20);
 		sphere.Init(20, 20);
-    sphere.textureHandle = mesh.textureHandle;
+    sphere.LoadTexture('img/mars.jpg');
     sphere.BuildNormalVisualizationGeometry();
     
     cylinder = new Mesh();
     cylinder.Cylinder(20, 20);
 		cylinder.Init(20, 20);
     cylinder.LoadTexture('img/metal.jpg');
+    cylinder.BuildNormalVisualizationGeometry();
     
     mars = new Mars();
     mars.InitMars();
-    mars.textureHandle = mesh.textureHandle;
+    mars.LoadTexture('img/mars.jpg');
     mars.BuildNormalVisualizationGeometry();
+
+    fbo = new Framebuffer();
     
     // Set up to draw the scene periodically.
     
-    setInterval(drawScene, 15);
+    //setInterval(drawScene, 15);
+    requestAnimationFrame(drawScene);
   }
 }
 
@@ -147,20 +153,21 @@ function initWebGL() {
 }
 
 // Draw the scene.
-function drawScene() {
- //update time
-  var fps_div = document.getElementById("fps");
-  var current_time = Date.now();
-  var delta_time = (lastTime - current_time);
-  fps_div.innerHTML = (1000.0 / delta_time) + " fps";
-  lastTime = current_time;
+function drawScene(timestamp) {
+	//update time
+	var fps_div = document.getElementById("fps");
+	var current_time = Date.now();
+	var delta_time = (lastTime - current_time);
+	var formattedTime = Math.floor(1000.0 / delta_time);
+	fps_div.innerHTML = formattedTime + " fps";
+	lastTime = current_time;
 
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  
-  var perspectiveMatrix = mat4.create();
-  mat4.perspective(perspectiveMatrix, 45, 800.0 / 600.0, 0.1, 100.0);
-  var mvMatrix = mat4.create();
-  mat4.lookAt( mvMatrix, cameraPosition, cameraTarget, cameraUp);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	var perspectiveMatrix = mat4.create();
+	mat4.perspective(perspectiveMatrix, 45, 800.0 / 600.0, 0.1, 100.0);
+	var mvMatrix = mat4.create();
+	mat4.lookAt( mvMatrix, cameraPosition, cameraTarget, cameraUp);
 
 	mat4.rotate(marsRotation, marsRotation, delta_time * 0.0001, vec3.fromValues(0,1,0));
 	mat4.multiply(mvMatrix, mvMatrix, marsRotation);
@@ -178,7 +185,8 @@ function drawScene() {
 	default: //case 0:
 		mesh.Draw(shader, mvMatrix, perspectiveMatrix);
 		break;
-  }
+	}
+	requestAnimationFrame(drawScene);
 }
 
 // Initialize the shaders, so WebGL knows how to light our scene.

@@ -1,3 +1,6 @@
+#ifdef GL_ES
+  precision mediump float;
+#endif
 
 attribute vec4 VertexPosition;
 attribute vec4 VertexColor;
@@ -8,15 +11,15 @@ uniform mat4 ModelViewMatrix;
 uniform mat4 ProjectionMatrix;
 uniform mat4 NormalMatrix;
       
-varying lowp vec4 Position;
-varying lowp vec4 Color;
-varying lowp vec4 Normal;
-varying lowp vec4 Texture;
+varying vec4 Position;
+varying vec4 Color;
+varying vec4 Normal;
+varying vec4 Texture;
 
 void main(void) {
-    gl_Position = ProjectionMatrix * ModelViewMatrix * VertexPosition;
-    Color = VertexColor;
-    Position = VertexPosition;
-    Normal = NormalMatrix * VertexNormal;
-    Texture = VertexTexture;
+  gl_Position = ProjectionMatrix * ModelViewMatrix * VertexPosition;
+  Color = VertexColor;
+  Position = VertexPosition;
+  Normal = NormalMatrix * VertexNormal;
+  Texture = VertexTexture;
 }

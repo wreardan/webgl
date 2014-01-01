@@ -20,19 +20,19 @@ Shader.prototype.CompileShaderFromFile = function(fileName) {
 	var extension = fileName.substring(fileName.lastIndexOf('.')+1);
 	var shader = this;
 	$.ajax({
-	  url: fileName,
-	  success: function( data ) {
-  		shader.CompileShader(data, extension);
-	    if(shader.fragmentShader && shader.vertexShader) {
-	    	try {
-				  shader.Link();
-				  shader.Use();
-		    	console.log("fragment shader and vertex shader loaded successfully");
-		    } catch(e) {
-		    	throw("Unable to Link/Use the shader program even though they loaded successfully: " + e);
-		    }
-	    }
-	  }
+		url: fileName,
+		success: function( data ) {
+		shader.CompileShader(data, extension);
+		if(shader.fragmentShader && shader.vertexShader) {
+			try {
+				shader.Link();
+				shader.Use();
+				console.log("fragment shader and vertex shader loaded successfully");
+			} catch(e) {
+				throw("Unable to Link/Use the shader program even though they loaded successfully: " + e);
+			}
+		}
+	}
 	});
 }
 
@@ -105,12 +105,13 @@ Shader.prototype.Use = function() {
 };
 Shader.prototype.BindAttribute = function(attributeName, num_elements, stride, offset) {
 	if(this.shaderProgram) {
-		if(this.attributes[attributeName] == null || this.attributes[attributeName] == -1) {
-			this.attributes[attributeName] = gl.getAttribLocation(this.shaderProgram, attributeName);
-			gl.enableVertexAttribArray(this.attributes[attributeName]);
+		var attribute = this.attributes[attributeName];
+		if(attribute == null || attribute == -1) {
+			attribute = gl.getAttribLocation(this.shaderProgram, attributeName);
+			gl.enableVertexAttribArray(attribute);
+			this.attributes[attributeName] = attribute;
 		}
-		else
-  		gl.vertexAttribPointer(this.attributes[attributeName], num_elements, gl.FLOAT, false, stride, offset);
+  		gl.vertexAttribPointer(attribute, num_elements, gl.FLOAT, false, stride, offset);
 	}
 };
 Shader.prototype.SetUniform = function(uniformName, value) {
