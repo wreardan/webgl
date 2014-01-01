@@ -39,25 +39,11 @@ Mesh.prototype.LoadModel = function (model, textureFilename) {
 //Load Faces
 }
 
-Mesh.prototype.LoadTexture = function (filename)
+Mesh.prototype.LoadTexture = function (filename, index)
 {
-	var texture = gl.createTexture();
-	var image = new Image();
-	var parent = this;
-	image.onload = function() {
-		gl.bindTexture(gl.TEXTURE_2D, texture);
-
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-
-		//Set texture parameters for any size image
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-		gl.bindTexture(gl.TEXTURE_2D, null);
-		
-		parent.textureHandle = texture;
-	}
-	image.src = filename;
+	if(!index) index = 0;
+	this.textures[index] = new Texture();
+	this.textures[index].Initialize(filename);
 }
 
 Mesh.prototype.CalculateNormals = function () {
@@ -321,12 +307,9 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 		shader.SetUniform("NormalMatrix", normalMatrix);
 
 		//Bind Texture(s)
-		if(this.textureHandle) {
-			gl.bindTexture(gl.TEXTURE_2D, this.textureHandle);
-			shader.SetUniform("TextureID", this.textureHandle);
-		} else {
+		if(!this.textures[0].Bind(0))
 			return;
-		}
+		shader.SetUniform("TextureID", this.textures[0].handle);
 
 		//Draw normal
 	    if (this.wireframe_mode == 0) {
