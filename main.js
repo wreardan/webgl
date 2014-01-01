@@ -9,6 +9,7 @@ var drawMode = 0;
 var lastTime = Date.now();
 var drawNormals = false;
 var fbo;
+var fboEnabled = false;
 
 //Handle Keyboard Input
 function doKeyDown(e) {
@@ -18,6 +19,9 @@ function doKeyDown(e) {
 		sphere.wireframe_mode = mesh.wireframe_mode;
 		cylinder.wireframe_mode = mesh.wireframe_mode;
 		mars.wireframe_mode = mesh.wireframe_mode;
+		break;
+	case 70: //F key
+		fboEnabled = ! fboEnabled;
 		break;
 	case 78://N key
 		drawNormals = ! drawNormals;
@@ -76,9 +80,11 @@ function handleMouseMove(event) {
 	event.preventDefault();
 	console.log("mouse move (" + event.x + "," + event.y + ")");
 }
-document.onmousedown = handleMouseDown;
-document.onmouseup = handleMouseUp;
-//document.mousemove = handleMouseMove;
+/*
+document.addEventListener("mousedown", handleMouseDown);
+document.addEventListener("mouseup", handleMouseUp);
+document.addEventListener("mousemove", handleMouseMove);
+*/
 
 // Called when the canvas is created to get the ball rolling.
 // Figuratively, that is. There's nothing moving in this demo.
@@ -90,11 +96,6 @@ function start() {
   // Only continue if WebGL is available and working
   
   if (gl) {
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
-    gl.clearDepth(1.0);                 // Clear everything
-    gl.enable(gl.DEPTH_TEST);           // Enable depth testing
-    gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
-    
     initShaders();
     
     // This should go into a Scene, then Init Here.
@@ -122,10 +123,9 @@ function start() {
     mars.BuildNormalVisualizationGeometry();
 
     fbo = new Framebuffer();
+    fbo.Initialize(1024, 768);
     
     // Set up to draw the scene periodically.
-    
-    //setInterval(drawScene, 15);
     requestAnimationFrame(drawScene);
   }
 }
@@ -154,6 +154,8 @@ function initWebGL() {
 
 // Draw the scene.
 function drawScene(timestamp) {
+	if(fboEnabled)
+		fbo.Bind();
 	//update time
 	var fps_div = document.getElementById("fps");
 	var current_time = Date.now();
@@ -162,10 +164,16 @@ function drawScene(timestamp) {
 	fps_div.innerHTML = formattedTime + " fps";
 	lastTime = current_time;
 
+	//OpenGL enables
+    gl.enable(gl.DEPTH_TEST);           // Enable depth testing
+    gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
+    
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
+    gl.clearDepth(1.0);                 // Clear everything
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	var perspectiveMatrix = mat4.create();
-	mat4.perspective(perspectiveMatrix, 45, 800.0 / 600.0, 0.1, 100.0);
+	mat4.perspective(perspectiveMatrix, 45, 1024.0 / 768.0, 0.1, 100.0);
 	var mvMatrix = mat4.create();
 	mat4.lookAt( mvMatrix, cameraPosition, cameraTarget, cameraUp);
 
@@ -186,6 +194,13 @@ function drawScene(timestamp) {
 		mesh.Draw(shader, mvMatrix, perspectiveMatrix);
 		break;
 	}
+
+	//OpenGL disables
+	gl.disable(gl.DEPTH_TEST);
+
+	if(fboEnabled)
+		fbo.Unbind();
+
 	requestAnimationFrame(drawScene);
 }
 
@@ -194,25 +209,26 @@ function initShaders() {
     
     shader = new Shader();
 	
-    shader.Init("shader-vs", "shader-fs");
-    //shader.InitFromFiles("shaders/basic.vs", "shaders/basic.fs");
-  
-    /*shader.EnableAttribute("VertexPosition");
-    shader.EnableAttribute("VertexColor");
-    shader.EnableAttribute("VertexNormal");
-    shader.EnableAttribute("VertexTexture");*/
+    //shader.Init("shader-vs", "shader-fs");
+    shader.InitFromFiles("shaders/basic.vs", "shaders/basic.fs", function() {
+		/*shader.EnableAttribute("VertexPosition");
+		shader.EnableAttribute("VertexColor");
+		shader.EnableAttribute("VertexNormal");
+		shader.EnableAttribute("VertexTexture");*/
 
-    shader.SetUniform("Material.Ka", [0.1, 0.1, 0.1]);
-    shader.SetUniform("Material.Kd", [0.9, 0.9, 0.9]);
-    shader.SetUniform("Material.Ks", [0.4, 0.4, 0.4]);
-    shader.SetUniform("Material.Shininess", 50.0);
+		shader.SetUniform("Material.Ka", [0.1, 0.1, 0.1]);
+		shader.SetUniform("Material.Kd", [0.9, 0.9, 0.9]);
+		shader.SetUniform("Material.Ks", [0.4, 0.4, 0.4]);
+		shader.SetUniform("Material.Shininess", 50.0);
 
-    shader.SetUniform("Light[0].Position", [1, 1, 1, 1]);
-    shader.SetUniform("Light[0].Intensity", [0.8, 0.8, 1.0]);
-    shader.SetUniform("Light[1].Position", [-1, -1, 1, 1]);
-    shader.SetUniform("Light[1].Intensity", [0.6, 1.0, 0.6]);
+		shader.SetUniform("Light[0].Position", [1, 1, 1, 1]);
+		shader.SetUniform("Light[0].Intensity", [0.8, 0.8, 1.0]);
+		shader.SetUniform("Light[1].Position", [-1, -1, 1, 1]);
+		shader.SetUniform("Light[1].Intensity", [0.6, 1.0, 0.6]);
+    });
 
     solidShader = new Shader();
-    solidShader.Init("solid-vs", "solid-fs");
+    //solidShader.Init("solid-vs", "solid-fs");
+	solidShader.InitFromFiles("shaders/solid.vs", "shaders/solid.fs");
 
 }

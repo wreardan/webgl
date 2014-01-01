@@ -9,14 +9,14 @@ function Shader() {
 Shader.prototype.Init = function(vertexShader, fragmentShader) {
 	this.CompileShaderFromScript(vertexShader);
 	this.CompileShaderFromScript(fragmentShader);
-  this.Link();
-  this.Use();
+	this.Link();
+	this.Use();
 }
-Shader.prototype.InitFromFiles = function(vertexShaderFilename, fragmentShaderFilename) {
-	this.CompileShaderFromFile(vertexShaderFilename);
-	this.CompileShaderFromFile(fragmentShaderFilename);
+Shader.prototype.InitFromFiles = function(vertexShaderFilename, fragmentShaderFilename, callback) {
+	this.CompileShaderFromFile(vertexShaderFilename, callback);
+	this.CompileShaderFromFile(fragmentShaderFilename, callback);
 }
-Shader.prototype.CompileShaderFromFile = function(fileName) {
+Shader.prototype.CompileShaderFromFile = function(fileName, callback) {
 	var extension = fileName.substring(fileName.lastIndexOf('.')+1);
 	var shader = this;
 	$.ajax({
@@ -28,6 +28,7 @@ Shader.prototype.CompileShaderFromFile = function(fileName) {
 				shader.Link();
 				shader.Use();
 				console.log("fragment shader and vertex shader loaded successfully");
+				if(callback) callback();
 			} catch(e) {
 				throw("Unable to Link/Use the shader program even though they loaded successfully: " + e);
 			}

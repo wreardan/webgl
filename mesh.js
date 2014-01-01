@@ -224,7 +224,7 @@ Mesh.prototype.StoreVertices = function(width, height) {
 				vertex.tex = [x_one * x, y_one * y, 1337.0, 1337.0];
 			}
 		}
-  }
+	}
 
   //Create Vertices VBO
   this.vboVertices = gl.createBuffer();
@@ -315,15 +315,15 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 	    if (this.wireframe_mode == 0) {
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.vboIndex);
 			gl.drawElements(gl.TRIANGLES, this.vertex_indices.length, gl.UNSIGNED_SHORT, 0);
-	    }
-	    //Draw Wireframe
-	    else if (this.wireframe_mode == 1) {
+		}
+		//Draw Wireframe
+		else if (this.wireframe_mode == 1) {
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.vboWireframe);
 			gl.drawElements(gl.LINES, this.wireframe_indices.length, gl.UNSIGNED_SHORT, 0);
-	    }
+		}
 
-	    //Draw normals
-	    if(drawNormals && this.vboNormals && this.vboNormalIndices) {
+		//Draw normals
+		if(drawNormals && this.vboNormals && this.vboNormalIndices) {
 			solidShader.Use();
 			gl.bindBuffer(gl.ARRAY_BUFFER, this.vboNormals);
 			solidShader.BindAttribute("VertexPosition", 4, 32, 0);
@@ -331,8 +331,8 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 			solidShader.SetUniform("ProjectionMatrix", projection);
 			solidShader.SetUniform("ModelViewMatrix", modelview);
 			gl.drawArrays(gl.LINES, 0, this.normalVertices.length);
-	    }
-	  }
+		}
+	}
 }
 
 

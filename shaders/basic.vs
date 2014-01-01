@@ -19,7 +19,7 @@ varying vec4 Texture;
 void main(void) {
   gl_Position = ProjectionMatrix * ModelViewMatrix * VertexPosition;
   Color = VertexColor;
-  Position = VertexPosition;
+  Position = ModelViewMatrix * VertexPosition;
   Normal = NormalMatrix * VertexNormal;
   Texture = VertexTexture;
 }

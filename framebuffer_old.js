@@ -8,12 +8,12 @@ function Framebuffer() {
 Framebuffer.prototype.Initialize = function (width, height) {
 	//Generate and bind Framebuffer
 	this.fbo = gl.createFramebuffer();
-	gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
+	this.Bind();
 
 	//Create the texture object
 	this.texture = new Texture();
 	this.texture.InitializeBlank(width, height);
-	this.texture.Bind(1);
+	this.texture.Bind(0);
 
 	//Bind the texture to the framebuffer
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, 
@@ -44,13 +44,12 @@ Framebuffer.prototype.Initialize = function (width, height) {
 	}
 
 	//Unbind objects
-	this.texture.Unbind();
-	gl.bindRenderbuffer(gl.RENDERBUFFER, null)
+	//this.texture.Unbind();
+	//gl.bindRenderbuffer(gl.RENDERBUFFER, null)
 	this.Unbind();
 }
 
 Framebuffer.prototype.Bind = function () {
-	this.texture.Bind(1);
 	gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo);
 }
 
