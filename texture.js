@@ -1,6 +1,7 @@
 //WebGL (C) Wesley Reardan 2014
 function Texture() {
 	this.handle = null;
+	this.textureUnit = 0;
 }
 
 Texture.prototype.Initialize = function (filename)
@@ -53,6 +54,8 @@ Texture.prototype.Bind = function (textureUnit) {
 	if(!textureUnit)
 		textureUnit = 0;
 
+	this.textureUnit = textureUnit;
+
 	gl.activeTexture(gl.TEXTURE0 + textureUnit);
 	gl.bindTexture(gl.TEXTURE_2D, this.handle);
 
@@ -60,6 +63,7 @@ Texture.prototype.Bind = function (textureUnit) {
 }
 
 Texture.prototype.Unbind = function () {
+	gl.activeTexture(gl.TEXTURE0 + this.textureUnit);
 	gl.bindTexture(gl.TEXTURE_2D, null);
 }
 

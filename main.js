@@ -21,7 +21,11 @@ function doKeyDown(e) {
 		mars.wireframe_mode = mesh.wireframe_mode;
 		break;
 	case 70: //F key
-		fboEnabled = ! fboEnabled;
+		if(fboEnabled) {
+			fboEnabled = fbo.ChangeEffect();
+		}
+		else
+			fboEnabled = ! fboEnabled;
 		break;
 	case 78://N key
 		drawNormals = ! drawNormals;
@@ -122,7 +126,7 @@ function start() {
     mars.LoadTexture('img/mars.jpg');
     mars.BuildNormalVisualizationGeometry();
 
-    fbo = new Framebuffer();
+    fbo = new PostProcess();
     fbo.Initialize(1024, 768);
     
     // Set up to draw the scene periodically.
@@ -198,8 +202,10 @@ function drawScene(timestamp) {
 	//OpenGL disables
 	gl.disable(gl.DEPTH_TEST);
 
-	if(fboEnabled)
+	if(fboEnabled) {
 		fbo.Unbind();
+		fbo.Render(timestamp)
+	}
 
 	requestAnimationFrame(drawScene);
 }

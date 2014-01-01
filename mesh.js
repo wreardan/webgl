@@ -309,7 +309,7 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 		//Bind Texture(s)
 		if(!this.textures[0].Bind(0))
 			return;
-		shader.SetUniform("TextureID", this.textures[0].handle);
+		shader.SetUniform("TextureID", 0, true);
 
 		//Draw normal
 	    if (this.wireframe_mode == 0) {

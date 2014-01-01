@@ -40,7 +40,7 @@ Framebuffer.prototype.Initialize = function (width, height) {
 	case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
 		throw("FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
 	default:
-		throw("Unknown Error");
+		throw("Framebuffer Unknown Error");
 	}
 
 	//Unbind objects
@@ -56,6 +56,7 @@ Framebuffer.prototype.Bind = function () {
 
 Framebuffer.prototype.Unbind = function () {
 	gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	this.texture.Unbind();
 }
 
 Framebuffer.prototype.Dispose = function () {
