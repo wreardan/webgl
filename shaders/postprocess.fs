@@ -10,7 +10,8 @@ uniform float uRandom;
 void main(void) {
 	vec2 pos = vec2(gl_FragCoord) / WindowSize;
 	if(Mode == 0) {
-//??
+//dream vision post effect 
+//http://www.geeks3d.com/20091112/shader-library-dream-vision-post-processing-filter-glsl/
 		vec4 texColor = texture2D(TextureID, pos);
 
 		texColor += texture2D(TextureID, pos + 0.001);
@@ -32,7 +33,7 @@ void main(void) {
 
 		gl_FragColor = texColor;
 	} else if (Mode == 1) {
-
+//Basic blur
 		float wave_pos = 1.0;
 		vec4 texColor = texture2D(TextureID, pos);
 
@@ -42,8 +43,8 @@ void main(void) {
 
 		gl_FragColor = mix(vec4(0,0,0,0), texColor, wave_pos);
 
-	} else {
-
+	} else if (Mode == 2) {
+//Noise
 		vec4 texColor = texture2D(TextureID, pos);
 		texColor.r = texture2D(TextureID, pos + 0.008).r;
 		texColor.g = texture2D(TextureID, pos + 0.004).g;
@@ -52,5 +53,60 @@ void main(void) {
 		//texColor = texColor * pos.x;
 		gl_FragColor = texColor;
 
+	} else if (Mode == 3) {
+//toony, posterize post effect adapted from:
+//http://www.geeks3d.com/20091027/shader-library-posterization-post-processing-effect-glsl/
+		vec4 texColor = texture2D( TextureID, pos);
+		vec3 c = texColor.xyz;
+		c = pow(c, vec3(0.6, 0.6, 0.6));
+		c = c * 8.0;
+		c = floor(c);
+		c = c / 8.0;
+		c = pow(c, vec3(1.0/0.6));
+		texColor = vec4(c.x, c.y, c.z, 1.0);
+		gl_FragColor = texColor;
+
+	} else if (Mode == 4) {
+//predator vision post effect adapted from:
+//http://www.geeks3d.com/20101123/shader-library-predators-thermal-vision-post-processing-filter-glsl/
+//play with colors[] for different variations
+		vec4 texColor = texture2D( TextureID, pos);
+		vec3 tc = vec3(1.0, 1.0, 1.0);
+
+		vec3 c = texColor.xyz;
+		vec3 colors[3];
+		colors[0] = vec3(0.0, 0.0, 1.0);
+		colors[1] = vec3(1.0, 1.0, 1.0);
+		colors[2] = vec3(1.0, 0.0, 0.0);
+		float lum = dot(vec3(0.30, 0.59, 0.11), c.rgb); //(c.r + c.g + c.b) / 3.0;
+//		int ix = (lum < 0.5) ? 0:1;
+//		tc = mix(colors[ix], colors[ix + 1], (lum - float(ix) * 0.5) / 0.5);
+		if(lum < 0.5)
+			tc = mix(colors[0], colors[1], (lum - float(0) * 0.5) / 0.5);
+		else
+			tc = mix(colors[1], colors[2], (lum - float(1) * 0.5) / 0.5);
+
+	    gl_FragColor = vec4(tc, 1.0);
+
+	} else if (Mode == 5) {
+//scan lines and faked chromatic aberration 
+//inpiration/methods used from: 
+//http://blog.jahfer.com/2012/04/02/experimenting-shaders-openframeworks/
+//http://cpansearch.perl.org/src/CORION/App-VideoMixer-0.02/filters/scanlines.glsl
+		vec4 texColor = texture2D( TextureID, pos);
+
+		float global_pos = (pos.y + 0.2) * 300.0;
+		float wave_pos = cos((fract( global_pos ) - 0.5)*3.14159);
+
+		texColor.r = texture2D(TextureID, pos).r;
+		texColor.g = texture2D(TextureID, pos + 0.004).g;
+		texColor.b = texture2D(TextureID, pos - 0.004).b;
+
+		gl_FragColor = mix(vec4(0,0,0,0), texColor, wave_pos);
+
+	} else {
+//Unfiltered image
+		vec4 texColor = texture2D(TextureID, pos);
+		gl_FragColor = texColor;
 	}
 }

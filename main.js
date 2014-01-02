@@ -9,7 +9,7 @@ var drawMode = 0;
 var lastTime = Date.now();
 var drawNormals = false;
 var fbo;
-var fboEnabled = false;
+var fboEnabled = true;
 
 //Handle Keyboard Input
 function doKeyDown(e) {
@@ -21,11 +21,7 @@ function doKeyDown(e) {
 		mars.wireframe_mode = mesh.wireframe_mode;
 		break;
 	case 70: //F key
-		if(fboEnabled) {
-			fboEnabled = fbo.ChangeEffect();
-		}
-		else
-			fboEnabled = ! fboEnabled;
+		fbo.ChangeEffect();
 		break;
 	case 78://N key
 		drawNormals = ! drawNormals;

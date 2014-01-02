@@ -3,8 +3,8 @@ function PostProcess() {
 	this.fbo = null;
 	this.shader = null;
 	this.vboSquare = null;
-	this.numEffects = 3;
-	this.currentEffect = 0;
+	this.numEffects = 7;
+	this.currentEffect = this.numEffects - 1;
 	this.width = 0;
 	this.height = 0;
 }
@@ -23,19 +23,11 @@ PostProcess.prototype.Initialize = function (width, height) {
 
 	//Generate square VBO
 	var squarePositions = [
-
 		-1.0,  1.0,		// 0, Top Left
 		-1.0, -1.0,		// 1, Bottom Left
-		1.0, -1.0,		// 2, Bottom Right
-		1.0, -1.0,		// 3, Bottom Right
-		1.0,  1.0,		// 4, Top Right
-		-1.0,  1.0,		// 5, Top Left
-/*
-		-1.0,  1.0,		// 0, Top Left
-		-1.0, -1.0,		// 1, Bottom Left
-		1.0, -1.0,		// 2, Bottom Right
 		1.0,  1.0,		// 3, Top Right
-*/
+		1.0, -1.0,		// 2, Bottom Right
+
 	];
 	this.vboSquare = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vboSquare);
@@ -80,14 +72,14 @@ PostProcess.prototype.Render = function (time) {
 	this.shader.SetUniform("uRandom", 0.0);
 
 	//DrawArrays
-	gl.drawArrays(gl.TRIANGLES, 0, 6);
+	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
 	//Unbind
 }
 
 PostProcess.prototype.ChangeEffect = function () {
 	this.currentEffect = (this.currentEffect + 1) % this.numEffects;
-	return this.currentEffect != 0;
+	return this.currentEffect == 0;
 }
 
 PostProcess.prototype.Dispose = function () {
