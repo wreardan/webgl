@@ -56,12 +56,13 @@ void main(void) {
 	} else if (Mode == 3) {
 //toony, posterize post effect adapted from:
 //http://www.geeks3d.com/20091027/shader-library-posterization-post-processing-effect-glsl/
+		float numColors = 5.0;
 		vec4 texColor = texture2D( TextureID, pos);
 		vec3 c = texColor.xyz;
 		c = pow(c, vec3(0.6, 0.6, 0.6));
-		c = c * 8.0;
+		c = c * numColors;
 		c = floor(c);
-		c = c / 8.0;
+		c = c / numColors;
 		c = pow(c, vec3(1.0/0.6));
 		texColor = vec4(c.x, c.y, c.z, 1.0);
 		gl_FragColor = texColor;
@@ -103,6 +104,41 @@ void main(void) {
 		texColor.b = texture2D(TextureID, pos - 0.004).b;
 
 		gl_FragColor = mix(vec4(0,0,0,0), texColor, wave_pos);
+	} else if (Mode == 6) {
+//Gaussian Blur, inspired by:
+//http://homepages.inf.ed.ac.uk/rbf/HIPR2/gsmooth.htm
+		vec4 texColor = texture2D(TextureID, pos) * 41.0;
+
+		texColor += texture2D(TextureID, pos + vec2(0.001, 0.0)) * 26.0;
+		texColor += texture2D(TextureID, pos + vec2(-0.001, 0.0)) * 26.0;
+		texColor += texture2D(TextureID, pos + vec2(0.0, 0.001)) * 26.0;
+		texColor += texture2D(TextureID, pos + vec2(0.0, -0.001)) * 26.0;
+
+		texColor += texture2D(TextureID, pos + vec2(-0.001, 0.001)) * 16.0;
+		texColor += texture2D(TextureID, pos + vec2(-0.001, -0.001)) * 16.0;
+		texColor += texture2D(TextureID, pos + vec2(0.001, -0.001)) * 16.0;
+		texColor += texture2D(TextureID, pos + vec2(0.001, 0.001)) * 16.0;
+
+		texColor += texture2D(TextureID, pos + vec2(0.003, 0.0)) * 7.0;
+		texColor += texture2D(TextureID, pos + vec2(-0.003, 0.0)) * 7.0;
+		texColor += texture2D(TextureID, pos + vec2(0.0, 0.003)) * 7.0;
+		texColor += texture2D(TextureID, pos + vec2(0.0, -0.003)) * 7.0;
+
+		texColor += texture2D(TextureID, pos + vec2(-0.003, 0.001)) * 4.0;
+		texColor += texture2D(TextureID, pos + vec2(-0.003, -0.001)) * 4.0;
+		texColor += texture2D(TextureID, pos + vec2(-0.001, -0.003)) * 4.0;
+		texColor += texture2D(TextureID, pos + vec2(0.001, -0.003)) * 4.0;
+		texColor += texture2D(TextureID, pos + vec2(0.003, -0.001)) * 4.0;
+		texColor += texture2D(TextureID, pos + vec2(0.003, 0.001)) * 4.0;
+		texColor += texture2D(TextureID, pos + vec2(0.001, 0.003)) * 4.0;
+		texColor += texture2D(TextureID, pos + vec2(-0.001, 0.003)) * 4.0;
+
+		texColor += texture2D(TextureID, pos + vec2(-0.003, 0.003)) * 1.0;
+		texColor += texture2D(TextureID, pos + vec2(-0.003, -0.003)) * 1.0;
+		texColor += texture2D(TextureID, pos + vec2(0.003, -0.003)) * 1.0;
+		texColor += texture2D(TextureID, pos + vec2(0.003, 0.003)) * 1.0;
+
+		gl_FragColor = texColor / 273.0;
 
 	} else {
 //Unfiltered image
