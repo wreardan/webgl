@@ -83,6 +83,9 @@ PostProcess.prototype.ChangeEffect = function () {
 }
 
 PostProcess.prototype.Dispose = function () {
+	fbo.Dispose();
+	fbo = null;
+	gl.deleteBuffer(vboSquare);
 }
 
 
