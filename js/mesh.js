@@ -109,7 +109,6 @@ Mesh.prototype.rawNormalVertices = function () {
 		data[index++] = vertex.position[0];
 		data[index++] = vertex.position[1];
 		data[index++] = vertex.position[2];
-		data[index++] = vertex.position[3];
 	}
 	return data;
 }
@@ -322,7 +321,7 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 		if(drawNormals && this.vboNormals && this.vboNormalIndices) {
 			solidShader.Use();
 			gl.bindBuffer(gl.ARRAY_BUFFER, this.vboNormals);
-			solidShader.BindAttribute("VertexPosition", 4, 16, 0);
+			solidShader.BindAttribute("VertexPosition", 3, 12, 0);
 			solidShader.SetUniform("MVP", MVP);
 			solidShader.SetUniform("Color", vec4.fromValues(1.0, 1.0, 1.0, 1.0));
 			gl.drawArrays(gl.LINES, 0, this.normalVertices.length);
