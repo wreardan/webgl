@@ -285,7 +285,7 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 		//Set Uniforms
 		var MVP = mat4.create();
 		mat4.multiply(MVP, projection, modelview);
-		shader.SetUniform("ProjectionMatrix", projection);
+		shader.SetUniform("MVP", MVP);
 		shader.SetUniform("ModelViewMatrix", modelview);
 		var normalMatrix = mat4.create();
 		mat4.transpose(normalMatrix, modelview);
