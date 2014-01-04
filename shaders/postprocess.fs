@@ -140,6 +140,29 @@ void main(void) {
 
 		gl_FragColor = texColor / 273.0;
 
+	} else if (Mode == 7) {
+//home grown inverse effect
+		vec4 texColor = texture2D( TextureID, pos);
+
+		texColor.r = 1.0 - texColor.r;
+		texColor.g = 1.0 - texColor.g;
+		texColor.b = 1.0 - texColor.b;
+
+		gl_FragColor = texColor;
+
+	} else if (Mode == 8) {
+//swap r,g,b values
+		vec4 texColor = texture2D( TextureID, pos);
+
+		gl_FragColor = texColor.gbra;
+
+	} else if (Mode == 9) {
+//swap r,g,b values
+		vec4 texColor = texture2D( TextureID, pos);
+
+		gl_FragColor = texColor.brga;
+
+
 	} else {
 //Unfiltered image
 		vec4 texColor = texture2D(TextureID, pos);
