@@ -3,7 +3,7 @@ function PostProcess() {
 	this.fbo = null;
 	this.shader = null;
 	this.vboSquare = null;
-	this.numEffects = 8;
+	this.numEffects = 11;
 	this.currentEffect = this.numEffects - 1;
 	this.width = 0;
 	this.height = 0;
