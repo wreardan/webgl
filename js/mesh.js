@@ -29,7 +29,6 @@ Mesh.prototype.LoadModel = function (model, textureFilename) {
 		vertex.position[0] = model.vertices[index++];
 		vertex.position[1] = model.vertices[index++];
 		vertex.position[2] = model.vertices[index++];
-		vertex.color = [1,1,1,1];
 		var normalIndex = i % mode.normals.length;
 		vertex.normal = [0,0,0,0];
 		vertex.normal[0] = model.normals[index-2];
@@ -84,10 +83,6 @@ Mesh.prototype.rawVertices = function () {
 		data[index++] = vertex.position[1];
 		data[index++] = vertex.position[2];
 		data[index++] = vertex.position[3];
-		data[index++] = vertex.color[0];
-		data[index++] = vertex.color[1];
-		data[index++] = vertex.color[2];
-		data[index++] = vertex.color[3];
 		data[index++] = vertex.normal[0];
 		data[index++] = vertex.normal[1];
 		data[index++] = vertex.normal[2];
@@ -202,17 +197,16 @@ Mesh.prototype.StoreIndices = function(width, height) {
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.wireframe_indices), gl.STATIC_DRAW);
 }
 
-Mesh.prototype.StoreVertices = function(width, height) {	
-	var y_one = 1.0 / (height-1);
-	var x_one = 1.0 / (width - 1);
-
+Mesh.prototype.StoreVertices = function(width, height) {
 	//Create planar-mesh if no Vertex Mesh exists
 	if(this.vertices.length == 0) {
+		var y_one = 1.0 / (height-1);
+		var x_one = 1.0 / (width - 1);
+
 		for (var y = 0; y < height; y++) {
 			for (var x = 0; x < width; x++) {
 				var vertex = this.vertices[y * width + x] = {};
 				vertex.position = [2.0 * x_one * x - 1.0, 2*y_one * y - 1, 0.0, 1.0];
-				vertex.color = [1.0, 1.0, 1.0, 1.0];
 				vertex.normal = [0.0, 0.0, 1.0, 0.0];
 				vertex.tex = [x_one * x, y_one * y, 1337.0, 1337.0];
 			}
@@ -251,7 +245,6 @@ Mesh.prototype.Sphere = function(width, height) {
 			var y = (Math.sin( -Math.PI/2 + Math.PI * r * R ));
 			var z = (Math.sin(2*Math.PI * c * S) * Math.sin( Math.PI * r * R ));
 			vertex.position = [x * 1.0, y * 1.0, z * 1.0, 1.0];
-			vertex.color = [1.0, 1.0, 1.0, 1.0];
 			vertex.normal = vertex.position;
 			vertex.tex = [R * c, S * r, 1337.0, 1337.0];
 			index++;
@@ -273,7 +266,6 @@ Mesh.prototype.Cylinder = function(width, height) {
 			var y = 1.0 - r * R * 2.0; //last term is height
 			var z = Math.sin(2 * Math.PI * c * S);
 			vertex.position = [x * 1.0, y * 1.0, z * 1.0, 1.0];
-			vertex.color = [1.0, 1.0, 1.0, 1.0];
 			vertex.normal = vertex.position;
 			vertex.tex = [S * r, R * c, 1337.0, 1337.0];
 			index++;
@@ -286,10 +278,9 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
     if(shader.linked) {
     	//Bind VBO
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vboVertices);
-		shader.BindAttribute("VertexPosition", 4, 16 * 4, 16*0);
-		shader.BindAttribute("VertexColor", 4, 16 * 4, 16*1);
-		shader.BindAttribute("VertexNormal", 4, 16 * 4, 16*2);
-		shader.BindAttribute("VertexTexture", 4, 16 * 4, 16*3);
+		shader.BindAttribute("VertexPosition", 4, 16 * 3, 16*0);
+		shader.BindAttribute("VertexNormal", 4, 16 * 3, 16*1);
+		shader.BindAttribute("VertexTexture", 4, 16 * 3, 16*2);
 
 		//Set Uniforms
 		var MVP = mat4.create();

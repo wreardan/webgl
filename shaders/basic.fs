@@ -3,7 +3,6 @@
 #endif
 
 varying vec4 Position;
-varying vec4 Color;
 varying vec4 Normal;
 varying vec4 Texture;
 
@@ -52,5 +51,5 @@ vec3 phongModel( vec3 pos, vec3 norm ) {
 void main(void) {
     vec3 phong = phongModel(vec3(Position), vec3(Normal));
     vec4 t_color = texture2D(TextureID, vec2(Texture));
-    gl_FragColor = Color * vec4(phong, 1.0) * t_color;
+    gl_FragColor = vec4(phong, 1.0) * t_color;
 }
