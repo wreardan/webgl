@@ -4,9 +4,8 @@
 
 attribute vec4 VertexPosition;
     
-uniform mat4 ModelViewMatrix;
-uniform mat4 ProjectionMatrix;
+uniform mat4 MVP;
 
 void main(void) {
-  gl_Position = ProjectionMatrix * ModelViewMatrix * VertexPosition;
+  gl_Position = MVP * VertexPosition;
 }

@@ -293,6 +293,8 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 		shader.BindAttribute("VertexTexture", 4, 16 * 4, 16*3);
 
 		//Set Uniforms
+		var MVP = mat4.create();
+		mat4.multiply(MVP, projection, modelview);
 		shader.SetUniform("ProjectionMatrix", projection);
 		shader.SetUniform("ModelViewMatrix", modelview);
 		var normalMatrix = mat4.create();
@@ -321,8 +323,7 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 			solidShader.Use();
 			gl.bindBuffer(gl.ARRAY_BUFFER, this.vboNormals);
 			solidShader.BindAttribute("VertexPosition", 4, 16, 0);
-			solidShader.SetUniform("ProjectionMatrix", projection);
-			solidShader.SetUniform("ModelViewMatrix", modelview);
+			solidShader.SetUniform("MVP", MVP);
 			solidShader.SetUniform("Color", vec4.fromValues(1.0, 1.0, 1.0, 1.0));
 			gl.drawArrays(gl.LINES, 0, this.normalVertices.length);
 		}
