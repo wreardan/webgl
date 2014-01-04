@@ -124,10 +124,10 @@ Mesh.prototype.BuildNormalVisualizationGeometry = function () {
 			var vertex = this.vertices[y * this.width + x];
 			var normalVertex1 = {};
 			var normalVertex2 = {position:[]};
-			normalVertex1.position = vec4.clone(vertex.position);
-			var scaledNormal = [0,0,0,0];
+			normalVertex1.position = vec3.clone(vertex.position);
+			var scaledNormal = vec3.create();
 			vec3.scale(scaledNormal, vertex.normal, normalScalar);
-			vec4.add(normalVertex2.position, vertex.position, scaledNormal);
+			vec3.add(normalVertex2.position, vertex.position, scaledNormal);
 			normalVertices.push(normalVertex1);
 			normalVertices.push(normalVertex2);
 			normalIndices.push(index++);
