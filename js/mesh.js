@@ -110,10 +110,6 @@ Mesh.prototype.rawNormalVertices = function () {
 		data[index++] = vertex.position[1];
 		data[index++] = vertex.position[2];
 		data[index++] = vertex.position[3];
-		data[index++] = vertex.color[0];
-		data[index++] = vertex.color[1];
-		data[index++] = vertex.color[2];
-		data[index++] = vertex.color[3];
 	}
 	return data;
 }
@@ -130,11 +126,9 @@ Mesh.prototype.BuildNormalVisualizationGeometry = function () {
 			var normalVertex1 = {};
 			var normalVertex2 = {position:[]};
 			normalVertex1.position = vec4.clone(vertex.position);
-			normalVertex1.color = [1.0, 1.0, 1.0, 1.0];
 			var scaledNormal = [0,0,0,0];
 			vec3.scale(scaledNormal, vertex.normal, normalScalar);
 			vec4.add(normalVertex2.position, vertex.position, scaledNormal);
-			normalVertex2.color = [1.0, 1.0, 1.0, 1.0];
 			normalVertices.push(normalVertex1);
 			normalVertices.push(normalVertex2);
 			normalIndices.push(index++);
@@ -326,10 +320,10 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 		if(drawNormals && this.vboNormals && this.vboNormalIndices) {
 			solidShader.Use();
 			gl.bindBuffer(gl.ARRAY_BUFFER, this.vboNormals);
-			solidShader.BindAttribute("VertexPosition", 4, 32, 0);
-			solidShader.BindAttribute("VertexColor", 4, 32, 16);
+			solidShader.BindAttribute("VertexPosition", 4, 16, 0);
 			solidShader.SetUniform("ProjectionMatrix", projection);
 			solidShader.SetUniform("ModelViewMatrix", modelview);
+			solidShader.SetUniform("Color", vec4.fromValues(1.0, 1.0, 1.0, 1.0));
 			gl.drawArrays(gl.LINES, 0, this.normalVertices.length);
 		}
 	}
