@@ -1,20 +1,20 @@
 //WebGL (C) Wesley Reardan 2013
 function Mesh() {
-    this.vertices = [];	//vec4 Position, vec4 Color, vec4 Normal, vec4 TexturePosition
-    this.vertex_indices = [];
-    this.wireframe_indices = [];
-    this.textures = [];
-    this.normalVertices = [];
-    this.normalIndices = [];
-    this.vboVertices = null;
-    this.vboIndex = null;
-    this.vboWireframe = null;
-    this.vboNormals = null;
-    this.vboNormalIndices = null;
-    this.wireframe_mode = 0;
-    this.textureHandle = null;
-    this.width = -1;
-    this.height = -1;
+	this.vertices = [];	//vec4 Position, vec4 Normal, vec4 TexturePosition
+	this.vertex_indices = [];
+	this.wireframe_indices = [];
+	this.textures = [];
+	this.normalVertices = [];
+	this.normalIndices = [];
+	this.tangents = [];
+	this.vboVertices = null;
+	this.vboIndex = null;
+	this.vboWireframe = null;
+	this.vboNormals = null;
+	this.vboTangents = null;
+	this.wireframe_mode = 0;
+	this.width = -1;
+	this.height = -1;
 }
 
 Mesh.prototype.LoadModel = function (model, textureFilename) {
@@ -73,6 +73,111 @@ Mesh.prototype.CalculateNormals = function () {
 	}
 }
 
+Mesh.prototype.CalculateTangents = function() {
+	var tan1accum = [];
+	var tan2accum = [];
+
+	//Initialize tangents to 0
+	for(var i = 0; i < this.vertices.length; i++) {
+		tan1accum[i] = vec3.create();
+		tan2accum[i] = vec3.create();
+		this.vertices[i].tangent = vec4.create();
+	}
+	//Average Tangentts
+	for(var i = 0; i < this.vertex_indices.length; i+=3) {
+		var p1 = this.vertices[this.vertex_indices[i]].position;
+		var p2 = this.vertices[this.vertex_indices[i+1]].position;
+		var p3 = this.vertices[this.vertex_indices[i+2]].position;
+
+		var tc1 = this.vertices[this.vertex_indices[i]].tex;
+		var tc2 = this.vertices[this.vertex_indices[i+1]].tex;
+		var tc3 = this.vertices[this.vertex_indices[i+2]].tex;
+
+		var q1 = vec3.create();
+		var q2 = vec3.create();
+		vec3.subtract(q1, p2, p1);
+		vec3.subtract(q2, p3, p1);
+		var s1 = tc2[0] - tc1[0];
+		var s2 = tc3[0] - tc1[0];
+		var t1 = tc2[1] - tc1[1];
+		var t2 = tc3[1] - tc1[1];
+		var r = 1.0 / (s1 * t2 - s2 * t1);
+
+		var tan1 = vec3.fromValues(
+			(t2*q1[0] - t1*q2[0]) * r,
+			(t2*q1[1] - t1*q2[1]) * r,
+			(t2*q1[2] - t1*q2[2]) * r);
+		var tan2 = vec3.fromValues(
+			(s1*q2[0] - s2*q1[0]) * r,
+			(s1*q2[1] - s2*q1[1]) * r,
+			(s1*q2[2] - s2*q1[2]) * r);
+
+		vec3.add(tan1accum[this.vertex_indices[i]], tan1accum[this.vertex_indices[i]], tan1);
+		vec3.add(tan1accum[this.vertex_indices[i+1]], tan1accum[this.vertex_indices[i+1]], tan1);
+		vec3.add(tan1accum[this.vertex_indices[i+2]], tan1accum[this.vertex_indices[i+2]], tan1);
+
+		vec3.add(tan2accum[this.vertex_indices[i]], tan2accum[this.vertex_indices[i]], tan2);
+		vec3.add(tan2accum[this.vertex_indices[i+1]], tan2accum[this.vertex_indices[i+1]], tan2);
+		vec3.add(tan2accum[this.vertex_indices[i+2]], tan2accum[this.vertex_indices[i+2]], tan2);
+	}
+	for(var i = 0; i < this.vertices.length; i++) {
+		var n = this.vertices[i].normal;
+		var t1 = tan1accum[i];
+		var t2 = tan2accum[i];
+		// Gram-Schmidt orthogonalize
+		var gs;
+
+		this.tangents[i] = vec4.fromValues()
+	}
+}
+
+Mesh.prototype.BuildTangentVisualizationGeometry = function () {
+	//solidShader.Use();
+	var tangentScalar = 0.05;
+	var tangentVertices = [];
+	var tangentIndices = [];
+	var index = 0;
+	for (var y = 0; y < this.height; y++) {
+		for (var x = 0; x < this.width; x++) {
+			var vertex = this.vertices[y * this.width + x];
+			var tangentVertex1 = {position: vec3.create()};
+			var tangentVertex2 = {position: vec3.create()};
+			var scaledTangent = vec3.create();
+			vec3.scale(scaledTangent, vertex.tangent, tangentScalar);
+			tangentVertex1.position = vec3.create();
+			vec3.add(tangentVertex1.position, vertex.position, scaledTangent);
+			vec3.sub(tangentVertex2.position, vertex.position, scaledTangent);
+			tangentVertices.push(tangentVertex1);
+			tangentVertices.push(tangentVertex2);
+			tangentIndices.push(index++);
+			tangentIndices.push(index++);
+		}
+	}
+	this.tangentVertices = tangentVertices;
+	this.tangentIndices = tangentIndices;
+	//Create VBOs
+	this.vboTangents = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vboTangents);
+	gl.bufferData(gl.ARRAY_BUFFER, this.rawTangentVertices(tangentVertices), gl.STATIC_DRAW);
+
+//	this.vboTangentIndices = gl.createBuffer();
+//	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.vboTangentIndices);
+//	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(tangentIndices), gl.STATIC_DRAW);
+}
+
+
+Mesh.prototype.rawTangentVertices = function (positions) {
+	var data = new Float32Array(positions.length * 3);
+	var index = 0;
+	for (var i = 0; i < positions.length; i++) {
+		var vertex = positions[i];
+		data[index++] = vertex.position[0];
+		data[index++] = vertex.position[1];
+		data[index++] = vertex.position[2];
+	}
+	return data;
+}
+
 
 Mesh.prototype.rawVertices = function () {
 	var data = [];
@@ -109,10 +214,9 @@ Mesh.prototype.rawNormalVertices = function () {
 }
 
 Mesh.prototype.BuildNormalVisualizationGeometry = function () {
-		solidShader.Use();
+	//solidShader.Use();
 	var normalScalar = 0.05;
 	var normalVertices = [];
-	var normalIndices = [];
 	var index = 0;
 	for (var y = 0; y < this.height; y++) {
 		for (var x = 0; x < this.width; x++) {
@@ -125,35 +229,29 @@ Mesh.prototype.BuildNormalVisualizationGeometry = function () {
 			vec3.add(normalVertex2.position, vertex.position, scaledNormal);
 			normalVertices.push(normalVertex1);
 			normalVertices.push(normalVertex2);
-			normalIndices.push(index++);
-			normalIndices.push(index++);
 		}
 	}
 	this.normalVertices = normalVertices;
-	this.normalIndices = normalIndices;
 	//Create VBOs
 	this.vboNormals = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this.vboNormals);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.rawNormalVertices()), gl.STATIC_DRAW);
 
-	this.vboNormalIndices = gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.vboNormalIndices);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.normalIndices), gl.STATIC_DRAW);
 }
 
 Mesh.prototype.GenerateIndices = function(width, height) {
 	//Create mesh vertex_indices
 	var index = 0;
 	for (var y = 0; y < height-1; y++) {
-	for (var x = 0; x < width-1; x++) {
-	  this.vertex_indices[index++] = (y) * width + (x + 1);
-	  this.vertex_indices[index++] = (y) * width + (x);
-	  this.vertex_indices[index++] = (y + 1) * width + (x);
-	  
-	  this.vertex_indices[index++] = (y + 1) * width + (x);
-	  this.vertex_indices[index++] = (y + 1) * width + (x + 1);
-	  this.vertex_indices[index++] = (y) * width + (x + 1);
-	}
+		for (var x = 0; x < width-1; x++) {
+			this.vertex_indices[index++] = (y) * width + (x + 1);
+			this.vertex_indices[index++] = (y) * width + (x);
+			this.vertex_indices[index++] = (y + 1) * width + (x);
+
+			this.vertex_indices[index++] = (y + 1) * width + (x);
+			this.vertex_indices[index++] = (y + 1) * width + (x + 1);
+			this.vertex_indices[index++] = (y) * width + (x + 1);
+		}
 	}
 
 	//Create wireframe vertex indices
@@ -221,7 +319,7 @@ Mesh.prototype.StoreVertices = function(width, height) {
 
 Mesh.prototype.Init = function(width, height) {
 	if(width * height > 65535)
-		throw("Mesh.Init: WebGL 1.0 limited to 65535 (ushort) vertices/Model; However, I will get chunked Meshes working in a future version and this limitation will be removed.");
+		throw("Mesh.Init: WebGL 1.0 limited to 65535 (ushort) vertices/Model; You can use the uint extension to get larger indices");
 		
 	this.width = width;
 	this.height = height;
@@ -309,7 +407,7 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 		}
 
 		//Draw normals
-		if(drawNormals && this.vboNormals && this.vboNormalIndices) {
+		if(drawNormals && this.vboNormals) {
 			solidShader.Use();
 			gl.bindBuffer(gl.ARRAY_BUFFER, this.vboNormals);
 			solidShader.BindAttribute("VertexPosition", 3, 12, 0);
@@ -317,12 +415,22 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 			solidShader.SetUniform("Color", vec4.fromValues(1.0, 1.0, 1.0, 1.0));
 			gl.drawArrays(gl.LINES, 0, this.normalVertices.length);
 		}
+
+		//Draw tangents
+		if(drawTangents && this.vboTangents) {
+			solidShader.Use();
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.vboTangents);
+			solidShader.BindAttribute("VertexPosition", 3, 12, 0);
+			solidShader.SetUniform("MVP", MVP);
+			solidShader.SetUniform("Color", vec4.fromValues(1.0, 1.0, 1.0, 1.0));
+			gl.drawArrays(gl.LINES, 0, this.tangentVertices.length);
+		}
 	}
 }
 
 
 Mesh.prototype.TakeDown = function () {
-    gl.deleteBuffer(vboVertices);
-    gl.deleteBuffer(vboIndex);
-    gl.deleteBuffer(vboWireframe);
+	gl.deleteBuffer(vboVertices);
+	gl.deleteBuffer(vboIndex);
+	gl.deleteBuffer(vboWireframe);
 }

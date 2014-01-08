@@ -1,0 +1,25 @@
+//WebGL (C) Wesley Reardan 2013
+function Scene() {
+	this.objects = [];
+	
+}
+
+Scene.prototype.Resize = function (width, height) {
+}
+
+//Create objects required by Scene
+Scene.prototype.Initialize = function () {
+}
+
+//update scene's objects
+Scene.prototype.Update = function (deltaTime) {
+}
+
+//draw the scene
+Scene.prototype.Render = function () {
+}
+
+//free scene objects
+Scene.prototype.Dispose = function () {
+}
+

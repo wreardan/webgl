@@ -1,3 +1,4 @@
+//WebGL (C) Wesley Reardan 2013
 #ifdef GL_ES
   precision mediump float;
 #endif

@@ -28,7 +28,9 @@ Mars.prototype.InitMars = function(){
 
 	this.GenerateIndices(width, height);
 	this.CalculateNormals();
+	this.CalculateTangents();
+	this.BuildTangentVisualizationGeometry();
 
 	this.StoreVertices(width, height);
-  this.StoreIndices(width, height);
+	this.StoreIndices(width, height);
 }

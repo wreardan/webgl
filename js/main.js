@@ -5,9 +5,10 @@ var cameraPosition = [0, 0, 3];
 var cameraTarget = [0, 0, 0];
 var cameraUp = [0, 1, 0];
 var marsRotation = mat4.create();
-var drawMode = 0;
+var drawMode = 1;
 var lastTime = Date.now();
 var drawNormals = false;
+var drawTangents = true;
 var fbo;
 var fboEnabled = true;
 
@@ -25,6 +26,9 @@ function doKeyDown(e) {
 		break;
 	case 78://N key
 		drawNormals = ! drawNormals;
+		break;
+	case 84://t key
+		drawTangents = ! drawTangents;
 		break;
 	case 37: //left arrow
 		cameraPosition[0]--;
@@ -50,10 +54,11 @@ function doKeyDown(e) {
 		cameraPosition[2]--;
 		cameraTarget[2]--;
 		break;
-	case 115: //change mode
+	case 112: //change mode
+		e.preventDefault();
 		drawMode++;
 		if(drawMode > 3) drawMode = 0;
-		break;
+		return false;
 	}
 }
 document.addEventListener("keydown", doKeyDown, true);
@@ -110,6 +115,9 @@ function start() {
 		sphere.Init(20, 20);
     sphere.LoadTexture('img/mars.jpg');
     sphere.BuildNormalVisualizationGeometry();
+
+	sphere.CalculateTangents();
+	sphere.BuildTangentVisualizationGeometry();
     
     cylinder = new Mesh();
     cylinder.Cylinder(20, 20);
