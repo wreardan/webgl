@@ -1,28 +1,23 @@
 //WebGL (C) Wesley Reardan 2013
 var canvas;
 var gl;
-var cameraPosition = [0, 0, 3];
-var cameraTarget = [0, 0, 0];
-var cameraUp = [0, 1, 0];
-var marsRotation = mat4.create();
-var drawMode = 1;
+
+//var scene = new Scene();
+var scene = new SceneSolarSystem();
+
 var lastTime = Date.now();
 var drawNormals = false;
-var drawTangents = true;
-var fbo;
-var fboEnabled = true;
+var drawTangents = false;
+var drawWireframe = false;
 
 //Handle Keyboard Input
 function doKeyDown(e) {
 	switch(e.keyCode) {
 	case 87://W key, for + Ctrl= && e.ctrlKey
-		mesh.wireframe_mode = (mesh.wireframe_mode == 0 ? 1 : 0);
-		sphere.wireframe_mode = mesh.wireframe_mode;
-		cylinder.wireframe_mode = mesh.wireframe_mode;
-		mars.wireframe_mode = mesh.wireframe_mode;
+		drawWireframe = ! drawWireframe;
 		break;
 	case 70: //F key
-		fbo.ChangeEffect();
+		scene.fbo.ChangeEffect();
 		break;
 	case 78://N key
 		drawNormals = ! drawNormals;
@@ -31,33 +26,21 @@ function doKeyDown(e) {
 		drawTangents = ! drawTangents;
 		break;
 	case 37: //left arrow
-		cameraPosition[0]--;
-		cameraTarget[0]--;
 		break;
 	case 39: //right arrow
-		cameraPosition[0]++;
-		cameraTarget[0]++;
 		break;
 	case 38: //up arrow
-		cameraPosition[1]++;
-		cameraTarget[1]++;
 		break;
 	case 40: //down arrow
-		cameraPosition[1]--;
-		cameraTarget[1]--;
 		break;
 	case 109: //subtract
-		cameraPosition[2]++;
-		cameraTarget[2]++;
 		break;
 	case 107: //add
-		cameraPosition[2]--;
-		cameraTarget[2]--;
 		break;
-	case 112: //change mode
+	case 112: //f1 - change mode
+	case 113: //f2 - change mode
 		e.preventDefault();
-		drawMode++;
-		if(drawMode > 3) drawMode = 0;
+		scene.ChangeObject();
 		return false;
 	}
 }
@@ -67,9 +50,6 @@ document.addEventListener("keydown", doKeyDown, true);
 var mouseDown = false;
 var lastMouseX = null;
 var lastMouseY = null;
-
-var moonRotationMatrix = mat4.create();
-mat4.identity(moonRotationMatrix);
 
 function handleMouseDown(event) {
 	event.preventDefault();
@@ -101,37 +81,9 @@ function start() {
   // Only continue if WebGL is available and working
   
   if (gl) {
-    initShaders();
-    
-    // This should go into a Scene, then Init Here.
 
-    mesh = new Mesh();
-    mesh.Init(20, 20);
-    mesh.LoadTexture('img/mars.jpg');
-    mesh.BuildNormalVisualizationGeometry();
-    
-    sphere = new Mesh();
-    sphere.Sphere(20, 20);
-		sphere.Init(20, 20);
-    sphere.LoadTexture('img/mars.jpg');
-    sphere.BuildNormalVisualizationGeometry();
-
-	sphere.CalculateTangents();
-	sphere.BuildTangentVisualizationGeometry();
-    
-    cylinder = new Mesh();
-    cylinder.Cylinder(20, 20);
-		cylinder.Init(20, 20);
-    cylinder.LoadTexture('img/metal.jpg');
-    cylinder.BuildNormalVisualizationGeometry();
-    
-    mars = new Mars();
-    mars.InitMars();
-    mars.LoadTexture('img/mars.jpg');
-    mars.BuildNormalVisualizationGeometry();
-
-    fbo = new PostProcess();
-    fbo.Initialize(1024, 768);
+    scene.Resize(1024, 768);
+    scene.Initialize();
     
     // Set up to draw the scene periodically.
     requestAnimationFrame(drawScene);
@@ -161,84 +113,16 @@ function initWebGL() {
 }
 
 // Draw the scene.
-function drawScene(timestamp) {
-	if(fboEnabled)
-		fbo.Bind();
-	//update time
-	var fps_div = document.getElementById("fps");
-	var current_time = Date.now();
-	var delta_time = (lastTime - current_time);
-	var formattedTime = Math.floor(1000.0 / delta_time);
-	fps_div.innerHTML = formattedTime + " fps";
-	lastTime = current_time;
+function drawScene(deltaTime) {
 
-	//OpenGL enables
-    gl.enable(gl.DEPTH_TEST);           // Enable depth testing
-    gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
-    
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
-    gl.clearDepth(1.0);                 // Clear everything
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-	var perspectiveMatrix = mat4.create();
-	mat4.perspective(perspectiveMatrix, 45, 1024.0 / 768.0, 0.1, 100.0);
-	var mvMatrix = mat4.create();
-	mat4.lookAt( mvMatrix, cameraPosition, cameraTarget, cameraUp);
-
-	mat4.rotate(marsRotation, marsRotation, delta_time * 0.0001, vec3.fromValues(0,1,0));
-	mat4.multiply(mvMatrix, mvMatrix, marsRotation);
-	switch(drawMode)
-	{
-	case 0:
-		mars.Draw(shader, mvMatrix, perspectiveMatrix);
-		break;
-	case 1:
-		sphere.Draw(shader, mvMatrix, perspectiveMatrix);
-		break;
-	case 2:
-		cylinder.Draw(shader, mvMatrix, perspectiveMatrix);
-		break;
-	default: //case 0:
-		mesh.Draw(shader, mvMatrix, perspectiveMatrix);
-		break;
-	}
-
-	//OpenGL disables
-	gl.disable(gl.DEPTH_TEST);
-
-	if(fboEnabled) {
-		fbo.Unbind();
-		fbo.Render(timestamp)
-	}
+	scene.Draw();
 
 	requestAnimationFrame(drawScene);
 }
 
-// Initialize the shaders, so WebGL knows how to light our scene.
-function initShaders() {
-    
-    shader = new Shader();
-	
-    //shader.Init("shader-vs", "shader-fs");
-    shader.InitFromFiles("shaders/basic.vs", "shaders/basic.fs", function() {
-		/*shader.EnableAttribute("VertexPosition");
-		shader.EnableAttribute("VertexColor");
-		shader.EnableAttribute("VertexNormal");
-		shader.EnableAttribute("VertexTexture");*/
-
-		shader.SetUniform("Material.Ka", [0.1, 0.1, 0.1]);
-		shader.SetUniform("Material.Kd", [0.9, 0.9, 0.9]);
-		shader.SetUniform("Material.Ks", [0.4, 0.4, 0.4]);
-		shader.SetUniform("Material.Shininess", 50.0);
-
-		shader.SetUniform("Light[0].Position", [1, 1, 1, 1]);
-		shader.SetUniform("Light[0].Intensity", [0.8, 0.8, 1.0]);
-		shader.SetUniform("Light[1].Position", [-1, -1, 1, 1]);
-		shader.SetUniform("Light[1].Intensity", [0.6, 1.0, 0.6]);
-    });
-
-    solidShader = new Shader();
-    //solidShader.Init("solid-vs", "solid-fs");
-	solidShader.InitFromFiles("shaders/solid.vs", "shaders/solid.fs");
-
+var updateInterval = 15;
+function UpdateScene() {
+	var deltaTime = updateInterval / 1000.0;
+	scene.Update(deltaTime);
 }
+setInterval(UpdateScene, updateInterval);

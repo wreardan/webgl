@@ -12,12 +12,12 @@ function Mesh() {
 	this.vboWireframe = null;
 	this.vboNormals = null;
 	this.vboTangents = null;
-	this.wireframe_mode = 0;
 	this.width = -1;
 	this.height = -1;
+	this.textureOnly = false;
 }
 
-Mesh.prototype.LoadModel = function (model, textureFilename) {
+Mesh.prototype.LoadModel = function (modelFilename) {
 	if(textureFilename)
 		this.LoadTexture(textureFilename);
 
@@ -311,16 +311,19 @@ Mesh.prototype.StoreVertices = function(width, height) {
 		}
 	}
 
-  //Create Vertices VBO
-  this.vboVertices = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, this.vboVertices);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.rawVertices()), gl.STATIC_DRAW);
+	//Create Vertices VBO
+	this.vboVertices = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this.vboVertices);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.rawVertices()), gl.STATIC_DRAW);
 }
 
 Mesh.prototype.Init = function(width, height) {
 	if(width * height > 65535)
 		throw("Mesh.Init: WebGL 1.0 limited to 65535 (ushort) vertices/Model; You can use the uint extension to get larger indices");
 		
+	if(!width) width = 20;
+	if(!height) height = 20;
+
 	this.width = width;
 	this.height = height;
 
@@ -333,7 +336,6 @@ Mesh.prototype.Sphere = function(width, height) {
 	var R = 1.0 / (height - 1);
 	var S = 1.0 / (width - 1);
 	var index;
-	var circlePos = [0, 0, 0, 1];
 
 	index = 0;
 	for (var r = 0; r < height; ++r) {
@@ -354,7 +356,6 @@ Mesh.prototype.Cylinder = function(width, height) {
 	var R = 1.0 / (height - 1);
 	var S = 1.0 / (width - 1);
 	var index;
-	var circlePos = [0, 0, 0, 1];
 
 	index = 0;
 	for (var r = 0; r < height; ++r) {
@@ -371,10 +372,10 @@ Mesh.prototype.Cylinder = function(width, height) {
 	}
 }
 
-Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
-    shader.Use();
-    if(shader.linked) {
-    	//Bind VBO
+Mesh.prototype.Draw = function (shader, solidShader, modelview, projection, size, lights) {
+	shader.Use();
+	if(shader.linked) {
+		//Bind VBO
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vboVertices);
 		shader.BindAttribute("VertexPosition", 4, 16 * 3, 16*0);
 		shader.BindAttribute("VertexNormal", 4, 16 * 3, 16*1);
@@ -395,15 +396,20 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 			return;
 		shader.SetUniform("TextureID", 0, true);
 
-		//Draw normal
-	    if (this.wireframe_mode == 0) {
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.vboIndex);
-			gl.drawElements(gl.TRIANGLES, this.vertex_indices.length, gl.UNSIGNED_SHORT, 0);
-		}
+		if(this.textureOnly)
+			shader.SetUniform("TextureOnly", 1, true);
+		else
+			shader.SetUniform("TextureOnly", 0, true);
+
 		//Draw Wireframe
-		else if (this.wireframe_mode == 1) {
+		if (drawWireframe) {
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.vboWireframe);
 			gl.drawElements(gl.LINES, this.wireframe_indices.length, gl.UNSIGNED_SHORT, 0);
+		}
+		//Draw normal
+		else {
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.vboIndex);
+			gl.drawElements(gl.TRIANGLES, this.vertex_indices.length, gl.UNSIGNED_SHORT, 0);
 		}
 
 		//Draw normals
@@ -429,8 +435,22 @@ Mesh.prototype.Draw = function (shader, modelview, projection, size, lights) {
 }
 
 
-Mesh.prototype.TakeDown = function () {
-	gl.deleteBuffer(vboVertices);
-	gl.deleteBuffer(vboIndex);
-	gl.deleteBuffer(vboWireframe);
+Mesh.prototype.Dispose = function () {
+	gl.deleteBuffer(this.vboVertices);
+	gl.deleteBuffer(this.vboIndex);
+	gl.deleteBuffer(this.vboWireframe);
+
+	this.vboVertices = null;
+	this.vboIndex = null;
+	this.vboWireframe = null;
+
+	if(this.vboNormals) {
+		gl.deleteBuffer(this.vboNormals);
+		this.vboNormals = null;
+	}
+
+	if(this.vboTangents) {
+		gl.deleteBuffer(this.vboTangents);
+		this.vboTangents = null;
+	}
 }

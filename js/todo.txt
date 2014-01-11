@@ -1,4 +1,0 @@
-Camera - Quaternion based
-PostProcess - multiple passes with one or two framebuffers, multiple textures
-Scene - break up into Scenes
-Solar System Scene - Planet class (position, rotation, rotationSpeed, parent, parentDistance)
