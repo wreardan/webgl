@@ -3,7 +3,11 @@ var canvas;
 var gl;
 
 //var scene = new Scene();
-var scene = new SceneSolarSystem();
+var scenes = [];
+scenes.push(new SceneSolarSystem() );
+scenes.push(new SceneEditor() );
+var currentScene = 0;
+var scene = scenes[currentScene];
 
 var lastTime = Date.now();
 var drawNormals = false;
@@ -36,6 +40,11 @@ function doKeyDown(e) {
 	case 109: //subtract
 		break;
 	case 107: //add
+		scene.Dispose();
+		currentScene = (currentScene + 1) % scenes.length;
+		scene = scenes[currentScene];
+    	scene.Resize(1024, 768);
+		scene.Initialize();
 		break;
 	case 112: //f1 - change mode
 	case 113: //f2 - change mode

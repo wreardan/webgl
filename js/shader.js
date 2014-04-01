@@ -88,21 +88,21 @@ Shader.prototype.Link = function() {
 	var shaderProgram;
 	
 	shaderProgram = gl.createProgram();
-  gl.attachShader(shaderProgram, this.vertexShader);
-  gl.attachShader(shaderProgram, this.fragmentShader);
-  gl.linkProgram(shaderProgram);
-  
+	gl.attachShader(shaderProgram, this.vertexShader);
+	gl.attachShader(shaderProgram, this.fragmentShader);
+	gl.linkProgram(shaderProgram);
+
 	if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    throw("Unable to initialize the shader program.");
-  }
-  
-  this.shaderProgram = shaderProgram;
-  this.linked = true;
+		throw("Unable to initialize the shader program.");
+	}
+
+	this.shaderProgram = shaderProgram;
+	this.linked = true;
 };
 Shader.prototype.Validate = function() {
 };
 Shader.prototype.Use = function() {
-  gl.useProgram(this.shaderProgram);
+	gl.useProgram(this.shaderProgram);
 };
 Shader.prototype.BindAttribute = function(attributeName, num_elements, stride, offset) {
 	if(this.shaderProgram) {
@@ -112,7 +112,7 @@ Shader.prototype.BindAttribute = function(attributeName, num_elements, stride, o
 			gl.enableVertexAttribArray(attribute);
 			this.attributes[attributeName] = attribute;
 		}
-  		gl.vertexAttribPointer(attribute, num_elements, gl.FLOAT, false, stride, offset);
+		gl.vertexAttribPointer(attribute, num_elements, gl.FLOAT, false, stride, offset);
 	}
 };
 Shader.prototype.SetUniform = function(uniformName, value, isInt) {
@@ -122,25 +122,36 @@ Shader.prototype.SetUniform = function(uniformName, value, isInt) {
 		}
 		if(this.uniforms[uniformName] == null || this.uniforms[uniformName] == -1
 				|| this.shaderProgram == null || this.shaderProgram == -1) {
-			console.log("SetUniform called before Shader has been loaded.");
+			console.log("Problem in Shader.SetUniform()");
 			return;
 		}
-		if(!value.length || value.length == 1) {
+		if(!value.length) {
 			if(!isInt)
 				gl.uniform1f(this.uniforms[uniformName], value);
 			else
 				gl.uniform1i(this.uniforms[uniformName], value);
-		} else if (value.length == 2) {
-			gl.uniform2fv(this.uniforms[uniformName], value);
-		} else if (value.length == 3) {
-			gl.uniform3fv(this.uniforms[uniformName], value);
-		} else if (value.length == 4) {
-			gl.uniform4fv(this.uniforms[uniformName], value);
-		} else if (value.length == 9) {
-			gl.uniformMatrix3fv(this.uniforms[uniformName], false, value);
-		} else if (value.length == 16) {
-			gl.uniformMatrix4fv(this.uniforms[uniformName], false, value);
-		} else throw ("Shader.SetUniform: unsupported type for parameter 'value'");
+		}
+		else {
+			switch (value.length) {
+			case 2:
+				gl.uniform2fv(this.uniforms[uniformName], value);
+				break;
+			case 3:
+				gl.uniform3fv(this.uniforms[uniformName], value);
+				break;
+			case 4:
+				gl.uniform4fv(this.uniforms[uniformName], value);
+				break;
+			case 9:
+				gl.uniformMatrix3fv(this.uniforms[uniformName], false, value);
+				break;
+			case 16:
+				gl.uniformMatrix4fv(this.uniforms[uniformName], false, value);
+				break;
+			default:
+				throw ("Shader.SetUniform: unsupported type for parameter 'value'");
+			}
+		}
 	}
 };
 Shader.prototype.PrintActiveUniforms = function() {
@@ -148,4 +159,11 @@ Shader.prototype.PrintActiveUniforms = function() {
 Shader.prototype.PrintActiveUniformBlocks = function() {
 };
 Shader.prototype.PrintActiveAttribs = function() {
+};
+
+
+Shader.prototype.Dispose = function() {
+	if(this.vertexShader)	gl.deleteShader(this.vertexShader);
+	if(this.fragmentShader)	gl.deleteShader(this.fragmentShader);
+	if(this.shaderProgram)	gl.deleteProgram(this.shaderProgram);
 };

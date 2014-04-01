@@ -333,20 +333,25 @@ Mesh.prototype.Init = function(width, height) {
 }
 
 Mesh.prototype.Sphere = function(width, height) {
-	var R = 1.0 / (height - 1);
-	var S = 1.0 / (width - 1);
+	var thetaFac = Math.PI / (height - 1);
+	var phiFac = 2.0 * Math.PI / (width - 1);
 	var index;
 
 	index = 0;
 	for (var r = 0; r < height; ++r) {
 		for (var c = 0; c < width; ++c) {
 			var vertex = this.vertices[r * width + c] = {};
-			var x = (Math.cos(2 * Math.PI * c * S) * Math.sin( Math.PI * r * R ));
-			var y = (Math.sin( -Math.PI/2 + Math.PI * r * R ));
-			var z = (Math.sin(2*Math.PI * c * S) * Math.sin( Math.PI * r * R ));
+
+			var theta = r * thetaFac;
+			var phi = c * phiFac;
+
+			var x = Math.sin( theta ) * Math.cos( phi );
+			var y = Math.cos(theta);
+			var z = Math.sin( theta ) * Math.sin( phi );
 			vertex.position = [x * 1.0, y * 1.0, z * 1.0, 1.0];
+
 			vertex.normal = vertex.position;
-			vertex.tex = [R * c, S * r, 1337.0, 1337.0];
+			vertex.tex = [c / (width - 1), r / (height - 1), 1337.0, 1337.0];
 			index++;
 		}
 	}
@@ -377,6 +382,7 @@ Mesh.prototype.Draw = function (shader, solidShader, modelview, projection, size
 	if(shader.linked) {
 		//Bind VBO
 		gl.bindBuffer(gl.ARRAY_BUFFER, this.vboVertices);
+		//Setup shader attributes
 		shader.BindAttribute("VertexPosition", 4, 16 * 3, 16*0);
 		shader.BindAttribute("VertexNormal", 4, 16 * 3, 16*1);
 		shader.BindAttribute("VertexTexture", 4, 16 * 3, 16*2);
